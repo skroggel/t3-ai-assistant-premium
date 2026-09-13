@@ -1,0 +1,4 @@
+plugin.tx_aiassistantpremium.settings.search {
+    integration = ke_search
+    formSelector = #form_kesearch_pi1
+}

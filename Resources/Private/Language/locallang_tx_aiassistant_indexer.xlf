@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="EXT:ai_assistant/Resources/Private/Language/locallang_tx_aiassistant_indexer.xlf" date="2026-02-19T11:35:55Z" product-name="ai_assistant">
+		<header/>
+		<body>
+			<trans-unit id="tx_aiassistant_indexer.type.shopware">
+				<source>Shopware</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.tab_shopware" resname="tx_aiassistant_indexer.tab_shopware">
+				<source>Shopware</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_api_key" resname="tx_aiassistant_indexer.shopware_api_key">
+				<source>Shopware Api Key</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_base_url" resname="tx_aiassistant_indexer.shopware_base_url">
+				<source>Shopware Base Url</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_client_id" resname="tx_aiassistant_indexer.shopware_client_id">
+				<source>Shopware Client Id</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_custom_fields" resname="tx_aiassistant_indexer.shopware_custom_fields">
+				<source>Shopware Custom Fields</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_download_base_url" resname="tx_aiassistant_indexer.shopware_download_base_url">
+				<source>Shopware Download Base Url</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_download_path" resname="tx_aiassistant_indexer.shopware_download_path">
+				<source>Shopware Download Path</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_indexed_fields" resname="tx_aiassistant_indexer.shopware_indexed_fields">
+				<source>Shopware Indexed Fields</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_lookback_days" resname="tx_aiassistant_indexer.shopware_lookback_days">
+				<source>Shopware Lookback Days</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_verify_tls" resname="tx_aiassistant_indexer.shopware_verify_tls">
+				<source>Shopware Verify Tls</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_base_url_desc" resname="tx_aiassistant_indexer.shopware_base_url_desc">
+				<source>Base URL of the Shopware API used by the Shopware indexer.</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_download_base_url_desc" resname="tx_aiassistant_indexer.shopware_download_base_url_desc">
+				<source>Base URL used to build public download links for Shopware media assets.</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_download_path_desc" resname="tx_aiassistant_indexer.shopware_download_path_desc">
+				<source>Path prefix used when building downloadable Shopware media URLs.</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_client_id_desc" resname="tx_aiassistant_indexer.shopware_client_id_desc">
+				<source>Shopware integration client identifier used for API authentication.</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_api_key_desc" resname="tx_aiassistant_indexer.shopware_api_key_desc">
+				<source>Shopware integration API key or client secret used for API authentication.</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_verify_tls_desc" resname="tx_aiassistant_indexer.shopware_verify_tls_desc">
+				<source>Controls whether TLS certificates are verified when calling the Shopware API.</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_lookback_days_desc" resname="tx_aiassistant_indexer.shopware_lookback_days_desc">
+				<source>Number of days used for incremental Shopware updates when no explicit cursor is available.</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_custom_fields_desc" resname="tx_aiassistant_indexer.shopware_custom_fields_desc">
+				<source>Comma-separated list of Shopware custom fields that should be added to metadata.</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_indexed_fields_desc" resname="tx_aiassistant_indexer.shopware_indexed_fields_desc">
+				<source>Comma-separated list of Shopware fields that should be included in the indexed text.</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_base_url_placeholder" resname="tx_aiassistant_indexer.shopware_base_url_placeholder">
+				<source>https://shop.example.com</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_download_base_url_placeholder" resname="tx_aiassistant_indexer.shopware_download_base_url_placeholder">
+				<source>https://shop.example.com</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_download_path_placeholder" resname="tx_aiassistant_indexer.shopware_download_path_placeholder">
+				<source>/media/</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_client_id_placeholder" resname="tx_aiassistant_indexer.shopware_client_id_placeholder">
+				<source>Shopware integration client ID</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_api_key_placeholder" resname="tx_aiassistant_indexer.shopware_api_key_placeholder">
+				<source>Shopware integration API key</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_lookback_days_placeholder" resname="tx_aiassistant_indexer.shopware_lookback_days_placeholder">
+				<source>1</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_custom_fields_placeholder" resname="tx_aiassistant_indexer.shopware_custom_fields_placeholder">
+				<source>custom_product_group, custom_manufacturer_text</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer.shopware_indexed_fields_placeholder" resname="tx_aiassistant_indexer.shopware_indexed_fields_placeholder">
+				<source>translated.name, translated.description, productNumber</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

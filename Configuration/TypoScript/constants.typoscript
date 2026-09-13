@@ -1,0 +1,12 @@
+plugin.tx_aiassistantpremium {
+    view {
+        # cat=plugin.tx_aiassistant_premium/file; type=string; label=Path to premium template root
+        templateRootPath = EXT:ai_assistant_premium/Resources/Private/Templates/
+
+        # cat=plugin.tx_aiassistant_premium/file; type=string; label=Path to premium partial root
+        partialRootPath = EXT:ai_assistant_premium/Resources/Private/Partials/
+
+        # cat=plugin.tx_aiassistant_premium/file; type=string; label=Path to premium layout root
+        layoutRootPath = EXT:ai_assistant_premium/Resources/Private/Layouts/
+    }
+}

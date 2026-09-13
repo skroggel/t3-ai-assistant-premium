@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<T3DataStructure>
+	<sheets>
+		<sDEF>
+			<ROOT>
+				<sheetTitle>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.ke_search.sheet.general</sheetTitle>
+				<type>array</type>
+				<el>
+					<settings.search.integration>
+						<label>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.integration</label>
+						<config>
+							<type>select</type>
+							<renderType>selectSingle</renderType>
+							<default>ke_search</default>
+							<items>
+								<numIndex index="0" type="array">
+									<label>ke_search</label>
+									<value>ke_search</value>
+								</numIndex>
+								<numIndex index="1" type="array">
+									<label>Apache Solr for TYPO3</label>
+									<value>solr</value>
+								</numIndex>
+							</items>
+						</config>
+					</settings.search.integration>
+
+					<settings.search.formSelector>
+						<label>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.form_selector</label>
+						<description>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.form_selector.description</description>
+						<config>
+							<type>input</type>
+							<default>#form_kesearch_pi1</default>
+							<required>true</required>
+						</config>
+					</settings.search.formSelector>
+
+					<settings.assistantProfile>
+						<label>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.optimizer_profile</label>
+						<config>
+							<type>select</type>
+							<renderType>selectSingle</renderType>
+							<foreign_table>tx_aiassistant_assistant_profile</foreign_table>
+							<default>3000</default>
+							<items>
+								<numIndex index="0" type="array">
+									<label></label>
+									<value>0</value>
+								</numIndex>
+							</items>
+							<foreign_table_where> AND {#tx_aiassistant_assistant_profile}.{#hidden}=0 AND {#tx_aiassistant_assistant_profile}.{#deleted}=0</foreign_table_where>
+						</config>
+					</settings.assistantProfile>
+				</el>
+			</ROOT>
+		</sDEF>
+	</sheets>
+</T3DataStructure>

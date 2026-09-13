@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<guides xmlns="https://www.phpdoc.org/guides"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://www.phpdoc.org/guides ../vendor/phpdocumentor/guides-cli/resources/schema/guides.xsd"
+        links-are-relative="true"
+        automatic-menu="false"
+        max-menu-depth="4"
+        default-code-language="php">
+    <project title="AI Assistant Premium"
+             version="local"
+             copyright="since 2026 by Steffen Kroggel &amp; contributors" />
+    <extension class="\T3Docs\Typo3DocsTheme\DependencyInjection\Typo3DocsThemeExtension"
+               typo3-core-preferred="13.4" />
+</guides>

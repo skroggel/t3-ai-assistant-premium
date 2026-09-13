@@ -1,0 +1,35 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Madj2k\AiAssistantPremium\:
+    resource: '../Classes/*'
+    exclude:
+      - '../Classes/Assistant/Pipeline/Processor/*'
+
+  Madj2k\AiAssistantPremium\Controller\SearchController:
+    public: true
+
+  Madj2k\AiAssistantPremium\Assistant\Pipeline\Processor\SearchResultRetrieverProcessor:
+    autowire: true
+    autoconfigure: false
+    tags:
+      - name: 'aiassistant.assistant.pipeline.processor'
+
+  Madj2k\AiAssistantPremium\Indexing\Adapter\PdfAdapter:
+    tags:
+      - name: 'aiassistant.indexing.adapter'
+
+  Madj2k\AiAssistantPremium\Backend\Configuration\PdfRegistryFieldContributor:
+    tags:
+      - name: 'aiassistant.backend.configuration.registry_field_contributor'
+
+  Madj2k\AiAssistantPremium\Indexing\Connector\ShopwareConnector:
+    tags:
+      - name: 'aiassistant.indexing.connector'
+
+  Madj2k\AiAssistantPremium\Indexing\Indexer\ShopwareIndexer:
+    tags:
+      - name: 'aiassistant.indexing.indexer'

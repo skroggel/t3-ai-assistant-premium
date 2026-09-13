@@ -1,0 +1,33 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      xmlns:aiAssistantPremium="http://typo3.org/ns/Madj2k/AiAssistantPremium/ViewHelpers"
+      data-namespace-typo3-fluid="true">
+
+    <f:if condition="{searchString}">
+        <f:if condition="{chatIdentifier}">
+            <f:if condition="{settings.assistantProfile} && {startTimestamp}">
+                <div class="aiassistant-summary-container js-aiassistant-summary-container">
+
+                    <f:render partial="Index/ChatBox" arguments="{_all}" />
+
+                    <f:form
+                        action="stream"
+                        controller="Chat"
+                        extensionName="AiAssistant"
+                        pluginName="Chat"
+                        pageType="1700000000"
+                        method="post"
+                        class="chat-box-form js-aiassistant-summary-form"
+                        additionalAttributes="{data-auto-submit: '1', data-error-message: resolvedErrorMessage}"
+                        novalidate="novalidate"
+                    >
+                        <f:form.hidden name="query" value="{searchString}" additionalAttributes="{class: 'js-aiassistant-summary-query'}" />
+                        <f:form.hidden name="assistantProfile" value="{settings.assistantProfile}" />
+                        <f:form.hidden name="chatIdentifier" value="{chatIdentifier}" />
+                        <f:form.hidden name="startTimestamp" value="{startTimestamp}" />
+                        <f:form.hidden name="settingsJson" value="{settingsJson}" />
+                    </f:form>
+                </div>
+            </f:if>
+        </f:if>
+    </f:if>
+</html>

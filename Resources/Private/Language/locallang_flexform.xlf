@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+	<file source-language="en" datatype="plaintext" original="messages" date="2026-06-13T00:00:00Z" product-name="ai_assistant_premium">
+		<body>
+			<trans-unit id="flexform.ke_search.sheet.general">
+				<source>AI search enhancement</source>
+			</trans-unit>
+			<trans-unit id="flexform.search.optimizer_profile">
+				<source>Query optimizer profile (optional)</source>
+			</trans-unit>
+			<trans-unit id="flexform.search.integration">
+				<source>Search integration</source>
+			</trans-unit>
+			<trans-unit id="flexform.search.form_selector">
+				<source>Search form CSS selector</source>
+			</trans-unit>
+			<trans-unit id="flexform.search.form_selector.description">
+				<source>Identifies the native search-engine form that should receive the optional AI query optimization metadata.</source>
+			</trans-unit>
+			<trans-unit id="flexform.search.summary_profile">
+				<source>Search summary profile</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

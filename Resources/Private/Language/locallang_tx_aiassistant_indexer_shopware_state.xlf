@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="EXT:ai_assistant/Resources/Private/Language/locallang_tx_aiassistant_indexer_shopware_state.xlf" date="2026-02-19T11:35:55Z" product-name="ai_assistant">
+		<header/>
+		<body>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state" resname="tx_aiassistant_indexer_shopware_state">
+				<source>Shopware state</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.cleanup_cursor_source_id" resname="tx_aiassistant_indexer_shopware_state.cleanup_cursor_source_id">
+				<source>Cleanup Cursor Source Id</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.cleanup_last_run_at" resname="tx_aiassistant_indexer_shopware_state.cleanup_last_run_at">
+				<source>Cleanup Last Run At</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.connector_uid" resname="tx_aiassistant_indexer_shopware_state.connector_uid">
+				<source>Connector Uid</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.cursor_source_id" resname="tx_aiassistant_indexer_shopware_state.cursor_source_id">
+				<source>Cursor Source Id</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.cursor_updated_at" resname="tx_aiassistant_indexer_shopware_state.cursor_updated_at">
+				<source>Cursor Updated At</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.indexer_uid" resname="tx_aiassistant_indexer_shopware_state.indexer_uid">
+				<source>Indexer Uid</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.items_failed" resname="tx_aiassistant_indexer_shopware_state.items_failed">
+				<source>Items Failed</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.items_indexed" resname="tx_aiassistant_indexer_shopware_state.items_indexed">
+				<source>Items Indexed</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.items_processed" resname="tx_aiassistant_indexer_shopware_state.items_processed">
+				<source>Items Processed</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.items_skipped" resname="tx_aiassistant_indexer_shopware_state.items_skipped">
+				<source>Items Skipped</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.last_error" resname="tx_aiassistant_indexer_shopware_state.last_error">
+				<source>Last Error</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.last_run_finished_at" resname="tx_aiassistant_indexer_shopware_state.last_run_finished_at">
+				<source>Last Run Finished At</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.last_run_started_at" resname="tx_aiassistant_indexer_shopware_state.last_run_started_at">
+				<source>Last Run Started At</source>
+			</trans-unit>
+			<trans-unit id="tx_aiassistant_indexer_shopware_state.status" resname="tx_aiassistant_indexer_shopware_state.status">
+				<source>Status</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

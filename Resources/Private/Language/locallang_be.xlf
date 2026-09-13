@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+	<file source-language="en" datatype="plaintext" original="messages" date="2026-06-13T00:00:00Z" product-name="ai_assistant_premium">
+		<body>
+			<trans-unit id="plugin.tx_aiassistantpremium_kesearch.title">
+				<source>AI search enhancer</source>
+			</trans-unit>
+			<trans-unit id="plugin.tx_aiassistantpremium_kesearch.description">
+				<source>Adds optional AI query optimization to an existing search-engine form.</source>
+			</trans-unit>
+			<trans-unit id="plugin.tx_aiassistantpremium_kesearchsummary.title">
+				<source>AI search summary</source>
+			</trans-unit>
+			<trans-unit id="plugin.tx_aiassistantpremium_kesearchsummary.description">
+				<source>Summarizes the structured results emitted by the search result template.</source>
+			</trans-unit>
+			<trans-unit id="configuration.pdf.linkToMatchedPage.label">
+				<source>PDF result links</source>
+			</trans-unit>
+			<trans-unit id="configuration.pdf.linkToMatchedPage.description">
+				<source>Controls whether PDF results link to the complete document or directly to the matched page. Force a full reindex after changing this setting.</source>
+			</trans-unit>
+			<trans-unit id="configuration.pdf.linkToMatchedPage.option.completePdf">
+				<source>Link to the complete PDF</source>
+			</trans-unit>
+			<trans-unit id="configuration.pdf.linkToMatchedPage.option.matchedPage">
+				<source>Link directly to the matched page</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

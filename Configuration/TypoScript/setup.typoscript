@@ -1,0 +1,39 @@
+plugin.tx_aiassistantpremium {
+    view {
+        templateRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Templates/
+        templateRootPaths.10 = {$plugin.tx_aiassistantpremium.view.templateRootPath}
+
+        partialRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Partials/
+        partialRootPaths.10 = EXT:ai_assistant/Resources/Private/Partials/
+        partialRootPaths.20 = {$plugin.tx_aiassistantpremium.view.partialRootPath}
+
+        layoutRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Layouts/
+        layoutRootPaths.10 = {$plugin.tx_aiassistantpremium.view.layoutRootPath}
+    }
+    persistence {
+        storagePid = {$plugin.tx_aiassistantpremium.persistence.storagePid}
+        #recursive = 1
+    }
+    features {
+        #skipDefaultArguments = 1
+        # if set to 1, the enable fields are ignored in BE context
+        ignoreAllEnableFieldsInBe = 0
+    }
+    mvc {
+        #callDefaultActionIfActionCantBeResolved = 1
+    }
+    settings {
+        search {
+            integration = ke_search
+            formSelector = #form_kesearch_pi1
+        }
+    }
+}
+
+plugin.tx_kesearch_pi1 {
+    view {
+        partialRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Partials
+        templateRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Templates
+        layoutRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Layouts
+    }
+}
