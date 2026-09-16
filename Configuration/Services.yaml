@@ -12,6 +12,9 @@ services:
   Madj2k\AiAssistantPremium\Controller\SearchController:
     public: true
 
+  Madj2k\AiAssistantPremium\Controller\PdfDiagnosticsController:
+    public: true
+
   Madj2k\AiAssistantPremium\Assistant\Pipeline\Processor\SearchResultRetrieverProcessor:
     autowire: true
     autoconfigure: false

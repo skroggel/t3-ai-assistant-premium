@@ -1,0 +1,156 @@
+<div class="aiassistant-config">
+    <f:render partial="Backend/Module/Header" arguments="{_all}" />
+    <f:render partial="Backend/Module/Navigation" arguments="{_all}" />
+
+    <div class="aiassistant-config__card">
+        <h2>Inspect PDF</h2>
+        <p class="aiassistant-config__intro">
+            Maximum file size: {maximumUploadMegabytes} MB. Embedded text is required; this tool does not perform OCR.
+        </p>
+
+        <f:if condition="{diagnosticError}">
+            <div class="aiassistant-config__notice aiassistant-config__notice--error">{diagnosticError}</div>
+        </f:if>
+        <f:if condition="!{licenseValid}">
+            <div class="aiassistant-config__notice aiassistant-config__notice--warning">A valid Premium license is required.</div>
+        </f:if>
+
+        <form method="post" enctype="multipart/form-data" class="aiassistant-pdf-diagnostics__form">
+            <input type="hidden" name="formToken" value="{formToken}" />
+            <label for="pdf-diagnostics-file"><strong>PDF file</strong></label>
+            <div class="aiassistant-pdf-diagnostics__form-controls">
+                <input
+                    id="pdf-diagnostics-file"
+                    class="aiassistant-pdf-diagnostics__file-input"
+                    type="file"
+                    name="pdfFile"
+                    accept="application/pdf,.pdf"
+                    required="required"
+                />
+                <f:if condition="{licenseValid}">
+                    <f:then><button class="aiassistant-config__button" type="submit">Inspect PDF</button></f:then>
+                    <f:else><button class="aiassistant-config__button" type="button" disabled="disabled">Inspect PDF</button></f:else>
+                </f:if>
+            </div>
+        </form>
+    </div>
+
+    <f:if condition="{diagnosticResult}">
+        <div class="aiassistant-config__card">
+            <h2>{diagnosticResult.filename}</h2>
+            <p class="aiassistant-config__intro">{diagnosticResult.pageCount} page(s) analysed. No indexing operation was executed.</p>
+
+            <div class="aiassistant-config__table-wrap">
+                <table class="aiassistant-config__table aiassistant-pdf-diagnostics__overview-table">
+                    <thead>
+                        <tr>
+                            <th>Page</th>
+                            <th>Strategy</th>
+                            <th>Layout</th>
+                            <th>Columns</th>
+                            <th>Table rows</th>
+                            <th>Confidence</th>
+                            <th>Characters</th>
+                            <th>Warnings</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <f:for each="{diagnosticResult.pages}" as="page">
+                            <tr>
+                                <td><strong>{page.number}</strong></td>
+                                <td><code class="aiassistant-config__key">{page.strategy}</code></td>
+                                <td><span class="aiassistant-config__badge aiassistant-config__badge--{f:if(condition: page.empty, then: 'warn', else: 'ok')}">{page.layoutType}</span></td>
+                                <td>{page.columnCount}</td>
+                                <td>{page.tableRowCount}</td>
+                                <td>{page.confidence}%</td>
+                                <td>{page.characterCount}</td>
+                                <td>
+                                    <f:if condition="{page.warningCount}">
+                                        <f:then><span class="aiassistant-config__badge aiassistant-config__badge--warn">{page.warningCount}</span></f:then>
+                                        <f:else><span class="aiassistant-config__badge aiassistant-config__badge--ok">0</span></f:else>
+                                    </f:if>
+                                </td>
+                            </tr>
+                        </f:for>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="aiassistant-pdf-diagnostics__pages">
+                <f:for each="{diagnosticResult.pages}" as="page">
+                    <section class="aiassistant-pdf-diagnostics__page">
+                        <h3 class="aiassistant-pdf-diagnostics__page-title">Page {page.number}</h3>
+
+                        <f:if condition="{page.warnings}">
+                            <div class="aiassistant-pdf-diagnostics__overlap-warning">
+                                <strong>Potentially hidden or overprinted text detected</strong>
+                                <p>
+                                    Different text objects occupy nearly identical coordinates. Both are present in the PDF text layer and currently remain in the extracted text.
+                                </p>
+                                <ul>
+                                    <f:for each="{page.warnings}" as="warning">
+                                        <li>
+                                            “{warning.firstText}” ↔ “{warning.secondText}”
+                                            <small>({warning.overlap}% overlap at x {warning.x}, y {warning.y})</small>
+                                        </li>
+                                    </f:for>
+                                </ul>
+                            </div>
+                        </f:if>
+
+                        <div class="aiassistant-pdf-diagnostics__page-layout">
+                            <div class="aiassistant-pdf-diagnostics__preview-column">
+                                <div class="aiassistant-pdf-diagnostics__column-heading">
+                                    <h4>Analysed PDF</h4>
+                                    <span>Hover over a region to locate its extracted text.</span>
+                                </div>
+
+                                <f:if condition="{page.previewDataUri}">
+                                    <f:then>
+                                        <div class="aiassistant-pdf-diagnostics__preview">
+                                            <img src="{page.previewDataUri}" alt="Rendered preview of page {page.number}" />
+                                            <div class="aiassistant-pdf-diagnostics__overlay" aria-label="Detected text regions">
+                                                <f:for each="{page.regions}" as="region">
+                                                    <button
+                                                        type="button"
+                                                        class="aiassistant-pdf-diagnostics__region"
+                                                        data-region-id="{region.id}"
+                                                        title="Region {region.number}: {region.text}"
+                                                        aria-label="Region {region.number}: {region.text}"
+                                                        style="--region-hue:{region.hue};left:{region.left}%;top:{region.top}%;width:{region.width}%;height:{region.height}%"
+                                                    ><span>{region.number}</span></button>
+                                                </f:for>
+                                            </div>
+                                        </div>
+                                    </f:then>
+                                    <f:else>
+                                        <div class="aiassistant-config__notice aiassistant-config__notice--warning">
+                                            No page preview could be rendered. Coordinate data remains available in the extraction result.
+                                        </div>
+                                    </f:else>
+                                </f:if>
+                            </div>
+
+                            <div class="aiassistant-pdf-diagnostics__text">
+                                <div class="aiassistant-pdf-diagnostics__column-heading">
+                                    <h4>Extracted text</h4>
+                                    <span>Highlighted segments correspond to the coordinate regions on the left.</span>
+                                </div>
+                                <f:if condition="{page.empty}">
+                                    <f:then>
+                                        <div class="aiassistant-config__notice aiassistant-config__notice--warning">
+                                            No embedded text was extracted from this page.
+                                        </div>
+                                    </f:then>
+                                    <f:else>
+                                        <pre class="aiassistant-config__code-block"><f:format.raw>{page.annotatedText}</f:format.raw></pre>
+                                    </f:else>
+                                </f:if>
+                            </div>
+                        </div>
+                    </section>
+                </f:for>
+            </div>
+        </div>
+    </f:if>
+</div>

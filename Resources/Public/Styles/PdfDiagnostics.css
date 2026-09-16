@@ -1,0 +1,254 @@
+.aiassistant-pdf-diagnostics__form {
+    margin-top: 20px;
+}
+
+.aiassistant-pdf-diagnostics__form label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.aiassistant-pdf-diagnostics__form-controls {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    width: min(100%, 680px);
+}
+
+.aiassistant-pdf-diagnostics__file-input {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 42px;
+    padding: 4px;
+    border: 1px solid #c9ced6;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #252a31;
+    color-scheme: light;
+    font: inherit;
+}
+
+.aiassistant-pdf-diagnostics__file-input::file-selector-button {
+    height: 32px;
+    margin: 0 10px 0 0;
+    padding: 0 13px;
+    border: 0;
+    border-right: 1px solid #d9dde3;
+    border-radius: 4px 0 0 4px;
+    background: color-mix(in srgb, var(--aiassistant-accent) 10%, #ffffff);
+    color: var(--aiassistant-accent);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.aiassistant-pdf-diagnostics__file-input:hover::file-selector-button {
+    background: color-mix(in srgb, var(--aiassistant-accent) 17%, #ffffff);
+}
+
+.aiassistant-pdf-diagnostics__form-controls .aiassistant-config__button {
+    flex: 0 0 auto;
+    min-height: 42px;
+    white-space: nowrap;
+}
+
+.aiassistant-pdf-diagnostics__overview-table {
+    min-width: 720px !important;
+}
+
+.aiassistant-pdf-diagnostics__pages {
+    display: grid;
+    gap: 24px;
+    margin-top: 28px;
+}
+
+.aiassistant-pdf-diagnostics__page {
+    border: 1px solid var(--aiassistant-card-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--aiassistant-card-bg);
+}
+
+.aiassistant-pdf-diagnostics__page-title {
+    margin: 0;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--aiassistant-card-border);
+    background: color-mix(in srgb, var(--aiassistant-table-head-bg) 92%, var(--aiassistant-accent) 8%);
+}
+
+.aiassistant-pdf-diagnostics__overlap-warning {
+    margin: 18px 20px 0;
+    padding: 14px 16px;
+    border: 1px solid #e3a008;
+    border-left-width: 4px;
+    border-radius: 6px;
+    background: color-mix(in srgb, #f6c344 15%, var(--aiassistant-card-bg));
+}
+
+.aiassistant-pdf-diagnostics__overlap-warning p {
+    margin: 6px 0 10px;
+    color: var(--aiassistant-muted);
+}
+
+.aiassistant-pdf-diagnostics__overlap-warning ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.aiassistant-pdf-diagnostics__overlap-warning li + li {
+    margin-top: 6px;
+}
+
+.aiassistant-pdf-diagnostics__overlap-warning small {
+    color: var(--aiassistant-muted);
+}
+
+.aiassistant-pdf-diagnostics__page-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0;
+}
+
+.aiassistant-pdf-diagnostics__preview-column,
+.aiassistant-pdf-diagnostics__text {
+    min-width: 0;
+    padding: 20px;
+}
+
+.aiassistant-pdf-diagnostics__preview-column {
+    border-right: 1px solid var(--aiassistant-card-border);
+}
+
+.aiassistant-pdf-diagnostics__column-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.aiassistant-pdf-diagnostics__column-heading h4 {
+    margin: 0;
+}
+
+.aiassistant-pdf-diagnostics__column-heading span {
+    color: var(--aiassistant-muted);
+    font-size: 12px;
+    text-align: right;
+}
+
+.aiassistant-pdf-diagnostics__preview {
+    position: relative;
+    width: min(100%, 820px);
+    margin: 0 auto;
+    border: 1px solid var(--aiassistant-card-border);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+    background: #ffffff;
+}
+
+.aiassistant-pdf-diagnostics__preview img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.aiassistant-pdf-diagnostics__overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.aiassistant-pdf-diagnostics__region {
+    position: absolute;
+    z-index: 1;
+    min-width: 4px;
+    min-height: 4px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid hsl(var(--region-hue) 78% 46% / 55%);
+    border-radius: 2px;
+    background: hsl(var(--region-hue) 82% 52% / 9%);
+    color: transparent;
+    pointer-events: auto;
+    cursor: crosshair;
+    transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.aiassistant-pdf-diagnostics__region span {
+    position: absolute;
+    top: -15px;
+    left: -1px;
+    min-width: 16px;
+    padding: 1px 3px;
+    border-radius: 2px 2px 0 0;
+    background: hsl(var(--region-hue) 70% 40% / 88%);
+    color: #ffffff;
+    font-size: 9px;
+    line-height: 13px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.aiassistant-pdf-diagnostics__region:hover,
+.aiassistant-pdf-diagnostics__region:focus-visible,
+.aiassistant-pdf-diagnostics__region.is-active {
+    z-index: 3;
+    outline: 0;
+    border-color: hsl(var(--region-hue) 82% 38%);
+    background: hsl(var(--region-hue) 88% 52% / 28%);
+    box-shadow: 0 0 0 2px hsl(var(--region-hue) 82% 45% / 25%);
+}
+
+.aiassistant-pdf-diagnostics__region:hover span,
+.aiassistant-pdf-diagnostics__region:focus-visible span,
+.aiassistant-pdf-diagnostics__region.is-active span {
+    opacity: 1;
+}
+
+.aiassistant-pdf-diagnostics__text .aiassistant-config__code-block {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    max-height: 720px;
+    margin: 0;
+}
+
+.aiassistant-pdf-diagnostics__text-region {
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid hsl(var(--region-hue) 72% 44% / 38%);
+    background: hsl(var(--region-hue) 82% 52% / 7%);
+    color: inherit;
+    transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.aiassistant-pdf-diagnostics__text-region:hover,
+.aiassistant-pdf-diagnostics__text-region:focus-visible,
+.aiassistant-pdf-diagnostics__text-region.is-active {
+    outline: 0;
+    background: hsl(var(--region-hue) 88% 52% / 30%);
+    box-shadow: 0 0 0 2px hsl(var(--region-hue) 82% 45% / 18%);
+}
+
+@media (max-width: 960px) {
+    .aiassistant-pdf-diagnostics__page-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .aiassistant-pdf-diagnostics__preview-column {
+        border-right: 0;
+        border-bottom: 1px solid var(--aiassistant-card-border);
+    }
+}
+
+@media (max-width: 720px) {
+    .aiassistant-pdf-diagnostics__form-controls {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .aiassistant-pdf-diagnostics__form-controls .aiassistant-config__button {
+        align-self: flex-start;
+    }
+}

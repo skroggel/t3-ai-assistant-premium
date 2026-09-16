@@ -37,6 +37,13 @@ final class PdfTextNormalizer
         $text = str_replace(["\r\n", "\r"], "\n", $text);
         $text = str_replace(["\u{00A0}", "\u{202F}"], ' ', $text);
         $text = str_replace("\u{00AD}", '', $text);
+        $text = strtr($text, [
+            "\u{FB00}" => 'ff',
+            "\u{FB01}" => 'fi',
+            "\u{FB02}" => 'fl',
+            "\u{FB03}" => 'ffi',
+            "\u{FB04}" => 'ffl',
+        ]);
         $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $text) ?? $text;
 
         $blocks = preg_split('/\n[ \t]*\n+/u', trim($text), -1, PREG_SPLIT_NO_EMPTY);
@@ -99,6 +106,7 @@ final class PdfTextNormalizer
     {
         $columnLines = 0;
         $listLines = 0;
+        $delimitedLines = 0;
 
         foreach ($lines as $line) {
             if (preg_match('/\S[ \t]{2,}\S/u', $line) === 1) {
@@ -108,8 +116,12 @@ final class PdfTextNormalizer
             if (preg_match('/^\s*(?:[-*]|\d+[.)])\s+\S/u', $line) === 1) {
                 $listLines++;
             }
+
+            if (substr_count($line, ' | ') >= 1) {
+                $delimitedLines++;
+            }
         }
 
-        return $columnLines >= 2 || $listLines >= 2;
+        return $columnLines >= 2 || $listLines >= 2 || $delimitedLines >= 2;
     }
 }

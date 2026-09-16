@@ -23,6 +23,9 @@ use Madj2k\AiCore\Indexing\Adapter\AdapterInterface;
 use Madj2k\AiCore\Indexing\Adapter\MultiDocumentAdapterInterface;
 use Madj2k\AiCore\Indexing\DTO\IndexableDocument;
 use Madj2k\AiAssistantPremium\License\LicenseService;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageExtractionResult;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageTextExtractor;
+use Smalot\PdfParser\Config as PdfParserConfig;
 use Smalot\PdfParser\Parser;
 
 /**
@@ -52,7 +55,8 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
      */
     public function __construct(
         private readonly PdfTextNormalizer $textNormalizer,
-        private readonly LicenseService $licenseService
+        private readonly LicenseService $licenseService,
+        private readonly PdfPageTextExtractor $pageTextExtractor,
     ) {
 
     }
@@ -100,7 +104,7 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
         $metadata->addAdditional('pdf_page_count', count($pages));
 
         return trim(implode("\n\n", array_map(
-            fn (string $page): string => $this->textNormalizer->normalize($page),
+            fn (PdfPageExtractionResult $page): string => $this->textNormalizer->normalize($page->text),
             $pages
         )));
     }
@@ -121,9 +125,9 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
 
         foreach ($pages as $pageIndex => $page) {
             $pageNumber = $pageIndex + 1;
-            $pageMetadata = $this->createPageMetadata($metadata, $pageNumber, $pageCount);
+            $pageMetadata = $this->createPageMetadata($metadata, $pageNumber, $pageCount, $page);
             $documents[] = new IndexableDocument(
-                $this->textNormalizer->normalize($page),
+                $this->textNormalizer->normalize($page->text),
                 $pageMetadata
             );
         }
@@ -136,17 +140,19 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
      * Extracts raw text from the individual PDF pages.
      *
      * @param string $path PDF file path.
-     * @return array<int, string> Raw page texts in source order.
+     * @return array<int, \Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageExtractionResult> Page texts in source order.
      * @throws \Madj2k\AiCore\Exception\IndexingException
      */
     private function extractPages(string $path): array
     {
         try {
-            $document = (new Parser())->parseFile($path);
+            $parserConfig = new PdfParserConfig();
+            $parserConfig->setDataTmFontInfoHasToBeIncluded(true);
+            $document = (new Parser([], $parserConfig))->parseFile($path);
             $pages = [];
 
             foreach ($document->getPages() as $page) {
-                $pages[] = $page->getText();
+                $pages[] = $this->pageTextExtractor->extract($page);
             }
 
             return $pages;
@@ -166,12 +172,14 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
      * @param \Madj2k\AiCore\DTO\DocumentMetadata $metadata Base PDF metadata.
      * @param int $pageNumber One-based page number.
      * @param int $pageCount Total number of PDF pages.
+     * @param \Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageExtractionResult $result Extraction diagnostics.
      * @return \Madj2k\AiCore\DTO\DocumentMetadata Page metadata.
      */
     private function createPageMetadata(
         DocumentMetadata $metadata,
         int $pageNumber,
-        int $pageCount
+        int $pageCount,
+        PdfPageExtractionResult $result,
     ): DocumentMetadata {
         /** @var \Madj2k\AiCore\DTO\DocumentMetadata $pageMetadata */
         $pageMetadata = clone $metadata;
@@ -182,6 +190,11 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
         $pageMetadata->addAdditional('pdf_source_identifier', $sourceIdentifier);
         $pageMetadata->addAdditional('pdf_page_number', $pageNumber);
         $pageMetadata->addAdditional('pdf_page_count', $pageCount);
+        $pageMetadata->addAdditional('pdf_extraction_strategy', $result->strategy);
+        $pageMetadata->addAdditional('pdf_layout_type', $result->layoutType);
+        $pageMetadata->addAdditional('pdf_column_count', $result->columnCount);
+        $pageMetadata->addAdditional('pdf_table_row_count', $result->tableRowCount);
+        $pageMetadata->addAdditional('pdf_extraction_confidence', $result->confidence);
 
         if ($metadata->getUrl() !== '') {
             $sourceUrl = $metadata->getUrl();
