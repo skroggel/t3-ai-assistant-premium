@@ -110,13 +110,52 @@
 }
 
 .aiassistant-pdf-diagnostics__preview-column,
-.aiassistant-pdf-diagnostics__text {
+.aiassistant-pdf-diagnostics__workspace {
     min-width: 0;
     padding: 20px;
 }
 
 .aiassistant-pdf-diagnostics__preview-column {
     border-right: 1px solid var(--aiassistant-card-border);
+}
+
+.aiassistant-pdf-diagnostics__viewer-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--aiassistant-card-border);
+}
+
+.aiassistant-pdf-diagnostics__viewer-tab {
+    padding: 7px 13px;
+    border: 1px solid var(--aiassistant-card-border);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--aiassistant-card-bg) 92%, #ffffff);
+    color: var(--aiassistant-muted);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.aiassistant-pdf-diagnostics__viewer-tab:hover,
+.aiassistant-pdf-diagnostics__viewer-tab:focus-visible,
+.aiassistant-pdf-diagnostics__viewer-tab.is-active {
+    outline: 0;
+    border-color: color-mix(in srgb, var(--aiassistant-accent) 45%, var(--aiassistant-card-border));
+    background: color-mix(in srgb, var(--aiassistant-accent) 14%, #ffffff);
+    color: var(--aiassistant-accent);
+}
+
+.aiassistant-pdf-diagnostics__viewer-panel[hidden] {
+    display: none;
+}
+
+.aiassistant-pdf-diagnostics__viewer-hint {
+    margin: 0 0 14px;
+    color: var(--aiassistant-muted);
+    font-size: 12px;
 }
 
 .aiassistant-pdf-diagnostics__column-heading {
@@ -146,6 +185,95 @@
     background: #ffffff;
 }
 
+.aiassistant-pdf-diagnostics__layout-map {
+    display: grid;
+    gap: 7px;
+    width: min(100%, 820px);
+    margin: 0 auto;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item {
+    display: grid;
+    grid-template-columns: 24px 72px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid hsl(var(--layout-hue) 58% 44% / 35%);
+    border-left-width: 4px;
+    border-radius: 5px;
+    background: hsl(var(--layout-hue) 70% 48% / 6%);
+    color: var(--aiassistant-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-number {
+    color: hsl(var(--layout-hue) 70% 38%);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-shape {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3px;
+    height: 22px;
+    padding: 3px;
+    border: 1px solid hsl(var(--layout-hue) 58% 44% / 38%);
+    border-radius: 3px;
+    background: #ffffff;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-shape i {
+    display: block;
+    border-radius: 1px;
+    background: hsl(var(--layout-hue) 70% 48% / 35%);
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item--columns .aiassistant-pdf-diagnostics__layout-map-shape,
+.aiassistant-pdf-diagnostics__layout-map-item--side-by-side-tables .aiassistant-pdf-diagnostics__layout-map-shape {
+    grid-template-columns: 1fr 1fr;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item--table .aiassistant-pdf-diagnostics__layout-map-shape,
+.aiassistant-pdf-diagnostics__layout-map-item--side-by-side-tables .aiassistant-pdf-diagnostics__layout-map-shape {
+    background-color: #ffffff;
+    background-image: linear-gradient(hsl(var(--layout-hue) 60% 42% / 22%) 1px, transparent 1px);
+    background-size: 100% 5px;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item--full-width .aiassistant-pdf-diagnostics__layout-map-shape i + i,
+.aiassistant-pdf-diagnostics__layout-map-item--table .aiassistant-pdf-diagnostics__layout-map-shape i + i,
+.aiassistant-pdf-diagnostics__layout-map-item--header .aiassistant-pdf-diagnostics__layout-map-shape i + i,
+.aiassistant-pdf-diagnostics__layout-map-item--footer .aiassistant-pdf-diagnostics__layout-map-shape i + i {
+    display: none;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-label {
+    display: grid;
+    gap: 1px;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-label small {
+    color: var(--aiassistant-muted);
+}
+
+.aiassistant-pdf-diagnostics__layout-map-label .aiassistant-pdf-diagnostics__excluded-label {
+    color: #b54708;
+    font-weight: 700;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item:hover,
+.aiassistant-pdf-diagnostics__layout-map-item:focus-visible,
+.aiassistant-pdf-diagnostics__layout-map-item.is-active {
+    outline: 0;
+    border-color: hsl(var(--layout-hue) 72% 38%);
+    background: hsl(var(--layout-hue) 78% 48% / 16%);
+    box-shadow: 0 0 0 2px hsl(var(--layout-hue) 70% 44% / 12%);
+}
+
 .aiassistant-pdf-diagnostics__preview img {
     display: block;
     width: 100%;
@@ -158,9 +286,29 @@
     pointer-events: none;
 }
 
+.aiassistant-pdf-diagnostics__layout-region {
+    position: absolute;
+    z-index: 2;
+    box-sizing: border-box;
+    border: 2px dashed hsl(var(--layout-hue) 72% 38% / 78%);
+    border-radius: 3px;
+    background: hsl(var(--layout-hue) 76% 50% / 3%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease, background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.aiassistant-pdf-diagnostics__layout-region.is-active {
+    z-index: 4;
+    border-color: hsl(var(--layout-hue) 80% 32%);
+    background: hsl(var(--layout-hue) 84% 50% / 16%);
+    box-shadow: 0 0 0 3px hsl(var(--layout-hue) 76% 42% / 20%);
+    opacity: 1;
+}
+
 .aiassistant-pdf-diagnostics__region {
     position: absolute;
-    z-index: 1;
+    z-index: 3;
     min-width: 4px;
     min-height: 4px;
     margin: 0;

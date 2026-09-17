@@ -102,7 +102,7 @@
                             <div class="aiassistant-pdf-diagnostics__preview-column">
                                 <div class="aiassistant-pdf-diagnostics__column-heading">
                                     <h4>Analysed PDF</h4>
-                                    <span>Hover over a region to locate its extracted text.</span>
+                                    <span>Text coordinates and detected layout regions.</span>
                                 </div>
 
                                 <f:if condition="{page.previewDataUri}">
@@ -110,6 +110,13 @@
                                         <div class="aiassistant-pdf-diagnostics__preview">
                                             <img src="{page.previewDataUri}" alt="Rendered preview of page {page.number}" />
                                             <div class="aiassistant-pdf-diagnostics__overlay" aria-label="Detected text regions">
+                                                <f:for each="{page.layoutRegions}" as="layoutRegion">
+                                                    <div
+                                                        class="aiassistant-pdf-diagnostics__layout-region"
+                                                        data-layout-region-id="{layoutRegion.id}"
+                                                        style="--layout-hue:{layoutRegion.hue};left:{layoutRegion.left}%;top:{layoutRegion.top}%;width:{layoutRegion.width}%;height:{layoutRegion.height}%"
+                                                    ></div>
+                                                </f:for>
                                                 <f:for each="{page.regions}" as="region">
                                                     <button
                                                         type="button"
@@ -131,21 +138,86 @@
                                 </f:if>
                             </div>
 
-                            <div class="aiassistant-pdf-diagnostics__text">
-                                <div class="aiassistant-pdf-diagnostics__column-heading">
-                                    <h4>Extracted text</h4>
-                                    <span>Highlighted segments correspond to the coordinate regions on the left.</span>
+                            <div class="aiassistant-pdf-diagnostics__workspace" data-pdf-diagnostics-tabs>
+                                <div class="aiassistant-pdf-diagnostics__viewer-tabs" role="tablist" aria-label="Page {page.number} diagnostic view">
+                                    <button
+                                        id="pdf-diagnostics-page-{page.number}-text-tab"
+                                        type="button"
+                                        class="aiassistant-pdf-diagnostics__viewer-tab is-active"
+                                        role="tab"
+                                        aria-selected="true"
+                                        aria-controls="pdf-diagnostics-page-{page.number}-text-panel"
+                                        data-pdf-diagnostics-tab="text"
+                                    >Extracted text</button>
+                                    <button
+                                        id="pdf-diagnostics-page-{page.number}-layout-tab"
+                                        type="button"
+                                        class="aiassistant-pdf-diagnostics__viewer-tab"
+                                        role="tab"
+                                        aria-selected="false"
+                                        aria-controls="pdf-diagnostics-page-{page.number}-layout-panel"
+                                        tabindex="-1"
+                                        data-pdf-diagnostics-tab="layout"
+                                    >Layout analysis</button>
                                 </div>
-                                <f:if condition="{page.empty}">
-                                    <f:then>
-                                        <div class="aiassistant-config__notice aiassistant-config__notice--warning">
-                                            No embedded text was extracted from this page.
-                                        </div>
-                                    </f:then>
-                                    <f:else>
-                                        <pre class="aiassistant-config__code-block"><f:format.raw>{page.annotatedText}</f:format.raw></pre>
-                                    </f:else>
-                                </f:if>
+
+                                <div
+                                    id="pdf-diagnostics-page-{page.number}-text-panel"
+                                    class="aiassistant-pdf-diagnostics__viewer-panel aiassistant-pdf-diagnostics__text"
+                                    role="tabpanel"
+                                    aria-labelledby="pdf-diagnostics-page-{page.number}-text-tab"
+                                    data-pdf-diagnostics-panel="text"
+                                >
+                                    <p class="aiassistant-pdf-diagnostics__viewer-hint">Highlighted segments correspond to the coordinate regions in the PDF view.</p>
+                                    <f:if condition="{page.empty}">
+                                        <f:then>
+                                            <div class="aiassistant-config__notice aiassistant-config__notice--warning">
+                                                No embedded text was extracted from this page.
+                                            </div>
+                                        </f:then>
+                                        <f:else>
+                                            <pre class="aiassistant-config__code-block"><f:format.raw>{page.annotatedText}</f:format.raw></pre>
+                                        </f:else>
+                                    </f:if>
+                                </div>
+
+                                <div
+                                    id="pdf-diagnostics-page-{page.number}-layout-panel"
+                                    class="aiassistant-pdf-diagnostics__viewer-panel"
+                                    role="tabpanel"
+                                    aria-labelledby="pdf-diagnostics-page-{page.number}-layout-tab"
+                                    data-pdf-diagnostics-panel="layout"
+                                    hidden="hidden"
+                                >
+                                    <p class="aiassistant-pdf-diagnostics__viewer-hint">Detected regions in reading order. Hover over an element to display its boundary in the PDF.</p>
+                                    <div class="aiassistant-pdf-diagnostics__layout-map" aria-label="Detected page layout">
+                                        <f:for each="{page.layoutRegions}" as="layoutRegion">
+                                            <button
+                                                type="button"
+                                                class="aiassistant-pdf-diagnostics__layout-map-item aiassistant-pdf-diagnostics__layout-map-item--{layoutRegion.type}"
+                                                data-layout-region-id="{layoutRegion.id}"
+                                                style="--layout-hue:{layoutRegion.hue}"
+                                            >
+                                                <span class="aiassistant-pdf-diagnostics__layout-map-number">{layoutRegion.number}</span>
+                                                <span class="aiassistant-pdf-diagnostics__layout-map-shape" aria-hidden="true"><i></i><i></i></span>
+                                                <span class="aiassistant-pdf-diagnostics__layout-map-label">
+                                                    <strong>{layoutRegion.label}</strong>
+                                                    <f:if condition="{layoutRegion.excluded}">
+                                                        <f:then>
+                                                            <small class="aiassistant-pdf-diagnostics__excluded-label">von Indexierung ausgeschlossen</small>
+                                                            <small>{layoutRegion.text}</small>
+                                                        </f:then>
+                                                        <f:else>
+                                                            <small>
+                                                                {layoutRegion.columnCount} column(s)<f:if condition="{layoutRegion.tableRowCount}"> · {layoutRegion.tableRowCount} table row(s)</f:if>
+                                                            </small>
+                                                        </f:else>
+                                                    </f:if>
+                                                </span>
+                                            </button>
+                                        </f:for>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>

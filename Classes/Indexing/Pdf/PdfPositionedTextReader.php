@@ -56,7 +56,7 @@ final class PdfPositionedTextReader
 
             $x = (float)$matrix[4];
             $y = (float)$matrix[5];
-            $fontSize = max(1.0, isset($entry[3]) ? abs((float)$entry[3]) : abs((float)$matrix[3]));
+            $fontSize = $this->resolveEffectiveFontSize($entry, $matrix);
             $key = sprintf('%.2f:%.2f:%s', $x, $y, $text);
             if (isset($seen[$key])) {
                 continue;
@@ -69,6 +69,31 @@ final class PdfPositionedTextReader
             return $byY !== 0 ? $byY : $left['x'] <=> $right['x'];
         });
         return $atoms;
+    }
+
+    /**
+     * PDF producers encode the visible font size in two common ways: either in
+     * the Tf font-size operand while the text matrix has unit scale, or as a
+     * unit font size with the actual scale in the text matrix. Only substitute
+     * the matrix scale for the latter sentinel-style representation so regular
+     * PDFs retain their existing measurements.
+     *
+     * @param array<int, mixed> $entry
+     * @param array<int, mixed> $matrix
+     */
+    private function resolveEffectiveFontSize(array $entry, array $matrix): float
+    {
+        $matrixScale = abs((float)$matrix[3]);
+        if (!isset($entry[3])) {
+            return max(1.0, $matrixScale);
+        }
+
+        $declaredFontSize = abs((float)$entry[3]);
+        if ($declaredFontSize <= 1.01 && $matrixScale > 1.01) {
+            return $matrixScale;
+        }
+
+        return max(1.0, $declaredFontSize);
     }
 
     private function createRows(array $atoms): array

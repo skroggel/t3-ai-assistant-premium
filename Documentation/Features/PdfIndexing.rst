@@ -22,8 +22,10 @@ Layout-aware reading order
 ==========================
 
 For every page, the adapter compares the native PDF text stream with the
-positioned text elements. A geometry-based analysis detects plain text,
-parallel text columns, tables and pages that mix columns with structured rows.
+positioned text elements. A geometry-based analysis first separates horizontal
+page regions and then classifies each region as plain text, parallel columns or
+a table. Full-width headings therefore remain above column regions, while
+side-by-side tables can retain a different reading order from the prose above.
 
 The analysis uses coordinates, recurring column starts and whitespace only. It
 does not depend on document language, heading names or customer-specific
@@ -31,10 +33,17 @@ keywords. Text columns are emitted column by column. Table-like regions retain
 their visual row associations and use `` | `` as a cell separator. Common PDF
 ligatures are normalized before indexing.
 
-Each page document includes diagnostic metadata:
+Before extracting individual pages, the adapter compares text objects in the
+top and bottom page margins across the complete document. Repeated text at a
+stable position and coherent page-number sequences are treated as headers or
+footers and excluded from indexing. Position alone is not sufficient, so
+one-off footnotes, cover dates and other unique margin content remain intact.
 
-* ``pdf_extraction_strategy``: ``native``, ``positioned`` or
-  ``positioned-fallback``
+The page-level layout value summarizes these regional decisions. Each page
+document includes diagnostic metadata:
+
+* ``pdf_extraction_strategy``: ``native``, ``positioned``,
+  ``positioned-filtered`` or ``positioned-fallback``
 * ``pdf_layout_type``: ``plain``, ``columns``, ``table``, ``mixed`` or
   ``empty``
 * ``pdf_column_count`` and ``pdf_table_row_count``
@@ -53,6 +62,10 @@ strategy, detected layout, column and table-row counts, confidence and
 normalized text for every page. For the first 20 pages it also renders an
 in-memory page preview. Coordinate regions on the preview are linked to their
 matching segments in the normalized extraction text for visual inspection.
+The diagnostic view also displays the horizontal layout regions as a stacked
+map and as numbered frames on the rendered page, including their full-width,
+column or table classification. Confirmed headers and footers remain visible
+in the layout map and are explicitly labelled as excluded from indexing.
 Different text objects occupying nearly identical coordinates are reported as
 potentially hidden or overprinted text. This warning is diagnostic only; the
 text is not removed from the index automatically.

@@ -51,6 +51,27 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         self::assertStringContainsString('Beta | Y-23 | 8 % | South', $result->text);
     }
 
+    public function testKeepsFullWidthHeaderBeforeAsynchronousColumns(): void
+    {
+        $subject = new PdfPageLayoutAnalyzer();
+        $data = [$this->entry(20, 580, str_repeat('Full width heading ', 5))];
+        for ($row = 0; $row < 5; $row++) {
+            $data[] = $this->entry(20, 500 - $row * 14, 'Left prose line ' . ($row + 1));
+            $data[] = $this->entry(350, 496 - $row * 14, 'Right prose line ' . ($row + 1));
+        }
+
+        $result = $subject->analyze($data);
+
+        self::assertSame('mixed', $result->layoutType);
+        self::assertLessThan(strpos($result->text, 'Left prose line 1'), strpos($result->text, 'Full width heading'));
+        self::assertLessThan(strpos($result->text, 'Right prose line 1'), strpos($result->text, 'Left prose line 5'));
+
+        $regions = $subject->diagnoseRegions($data);
+        self::assertSame('full-width', $regions[0]['type']);
+        self::assertSame('columns', $regions[1]['type']);
+        self::assertSame(2, $regions[1]['columnCount']);
+    }
+
     public function testDeduplicatesOverprintedGlyphRuns(): void
     {
         $subject = new PdfPageLayoutAnalyzer();

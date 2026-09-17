@@ -45,4 +45,21 @@ final class PdfPageTextExtractorTest extends TestCase
         self::assertSame('native', $result->strategy);
         self::assertSame('Native paragraph', $result->text);
     }
+
+    public function testUsesFilteredPositionedTextWhenMarginArtifactsWereExcluded(): void
+    {
+        $page = $this->createStub(Page::class);
+        $page->method('getText')->willReturn('2Cocoa Alternatives Native paragraph');
+        $subject = new PdfPageTextExtractor(new PdfPageLayoutAnalyzer());
+
+        $result = $subject->extract(
+            $page,
+            [[[1, 0, 0, 1, 20, 500], 'Positioned paragraph', 'F1', '10']],
+            true,
+        );
+
+        self::assertSame('positioned-filtered', $result->strategy);
+        self::assertSame('Positioned paragraph', $result->text);
+        self::assertStringNotContainsString('Cocoa Alternatives', $result->text);
+    }
 }

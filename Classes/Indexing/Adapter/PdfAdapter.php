@@ -24,6 +24,7 @@ use Madj2k\AiCore\Indexing\Adapter\MultiDocumentAdapterInterface;
 use Madj2k\AiCore\Indexing\DTO\IndexableDocument;
 use Madj2k\AiAssistantPremium\License\LicenseService;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageExtractionResult;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfMarginArtifactDetector;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageTextExtractor;
 use Smalot\PdfParser\Config as PdfParserConfig;
 use Smalot\PdfParser\Parser;
@@ -57,6 +58,7 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
         private readonly PdfTextNormalizer $textNormalizer,
         private readonly LicenseService $licenseService,
         private readonly PdfPageTextExtractor $pageTextExtractor,
+        private readonly PdfMarginArtifactDetector $marginArtifactDetector,
     ) {
 
     }
@@ -149,10 +151,26 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
             $parserConfig = new PdfParserConfig();
             $parserConfig->setDataTmFontInfoHasToBeIncluded(true);
             $document = (new Parser([], $parserConfig))->parseFile($path);
+            $documentPages = $document->getPages();
+            $marginAnalysis = $this->marginArtifactDetector->analyze(array_map(
+                static fn ($page): array => [
+                    'positionedText' => $page->getDataTm(),
+                    'details' => $page->getDetails(),
+                ],
+                $documentPages,
+            ));
             $pages = [];
 
-            foreach ($document->getPages() as $page) {
-                $pages[] = $this->pageTextExtractor->extract($page);
+            foreach ($documentPages as $pageIndex => $page) {
+                $pageMarginAnalysis = $marginAnalysis[$pageIndex] ?? [
+                    'positionedText' => $page->getDataTm(),
+                    'artifacts' => [],
+                ];
+                $pages[] = $this->pageTextExtractor->extract(
+                    $page,
+                    $pageMarginAnalysis['positionedText'],
+                    $pageMarginAnalysis['artifacts'] !== [],
+                );
             }
 
             return $pages;

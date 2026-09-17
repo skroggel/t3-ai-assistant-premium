@@ -90,6 +90,126 @@ final readonly class PdfLayoutRenderer
     }
 
     /**
+     * Renders one bounded page region column by column. Unlike renderColumns(),
+     * this method deliberately has no concept of page-wide before/after rows.
+     *
+     * @param array<int, array{y: float, parts: array<int, array{xMin: float, xMax: float, text: string}>}> $rows
+     */
+    public function renderColumnRegion(array $rows, float $split, bool $preserveCells = false): string
+    {
+        $leftRows = [];
+        $rightRows = [];
+
+        foreach ($rows as $row) {
+            $partition = $this->partitionRowAtSplit($row, $split);
+            if ($partition['left'] !== []) {
+                $leftRows[] = ['y' => $row['y'], 'parts' => $partition['left']];
+            }
+            if ($partition['right'] !== []) {
+                $rightRows[] = ['y' => $row['y'], 'parts' => $partition['right']];
+            }
+        }
+
+        $renderSide = fn (array $sideRows): string => $preserveCells
+            ? $this->renderSideTable($sideRows)
+            : implode("\n", array_map(
+                static fn (array $row): string => implode(' ', array_column($row['parts'], 'text')),
+                $sideRows,
+            ));
+
+        return implode("\n\n", array_filter([
+            $renderSide($leftRows),
+            $renderSide($rightRows),
+        ], static fn (string $block): bool => $block !== ''));
+    }
+
+    /**
+     * Reconstructs a compact two-column table whose first-column value can be
+     * vertically centred next to a wrapping second-column value.
+     *
+     * @param array<int, array{y: float, parts: array<int, array<string, mixed>>}> $rows
+     */
+    private function renderSideTable(array $rows): string
+    {
+        $entries = [];
+        foreach ($rows as $row) {
+            foreach ($row['parts'] as $part) {
+                $entries[] = ['y' => (float)$row['y'], ...$part];
+            }
+        }
+        if (count($entries) < 2) {
+            return implode("\n", array_column($entries, 'text'));
+        }
+
+        $anchors = [];
+        foreach ($entries as $entry) {
+            foreach ($anchors as $index => $anchor) {
+                if (abs($entry['xMin'] - $anchor['x']) <= 8.0) {
+                    $anchors[$index]['x'] = (
+                        $anchor['x'] * $anchor['count'] + $entry['xMin']
+                    ) / ($anchor['count'] + 1);
+                    $anchors[$index]['count']++;
+                    continue 2;
+                }
+            }
+            $anchors[] = ['x' => $entry['xMin'], 'count' => 1];
+        }
+        usort($anchors, static fn (array $left, array $right): int => $left['x'] <=> $right['x']);
+        if (count($anchors) < 2) {
+            return implode("\n", array_map(
+                static fn (array $row): string => implode(' | ', array_column($row['parts'], 'text')),
+                $rows,
+            ));
+        }
+
+        $keyAnchor = $anchors[0]['x'];
+        $valueAnchor = $anchors[1]['x'];
+        $keys = [];
+        $values = [];
+        foreach ($entries as $entry) {
+            if (abs($entry['xMin'] - $keyAnchor) <= abs($entry['xMin'] - $valueAnchor)) {
+                $keys[] = $entry;
+            } else {
+                $values[] = $entry;
+            }
+        }
+        if ($keys === [] || $values === []) {
+            return implode("\n", array_map(
+                static fn (array $row): string => implode(' | ', array_column($row['parts'], 'text')),
+                $rows,
+            ));
+        }
+
+        usort($keys, static fn (array $left, array $right): int => $right['y'] <=> $left['y']);
+        $records = array_map(
+            static fn (array $key): array => ['key' => $key['text'], 'y' => $key['y'], 'values' => []],
+            $keys,
+        );
+        foreach ($values as $value) {
+            $closest = 0;
+            $distance = PHP_FLOAT_MAX;
+            foreach ($records as $index => $record) {
+                $candidate = abs($record['y'] - $value['y']);
+                if ($candidate < $distance) {
+                    $distance = $candidate;
+                    $closest = $index;
+                }
+            }
+            $records[$closest]['values'][] = $value;
+        }
+
+        return implode("\n", array_map(static function (array $record): string {
+            usort(
+                $record['values'],
+                static fn (array $left, array $right): int => $right['y'] <=> $left['y']
+                    ?: $left['xMin'] <=> $right['xMin'],
+            );
+            $value = implode(' ', array_column($record['values'], 'text'));
+            return $record['key'] . ($value === '' ? '' : ' | ' . $value);
+        }, $records));
+    }
+
+    /**
      * Keeps sparse/tabular rows in visual row order while reading dense prose
      * regions column by column.
      *
