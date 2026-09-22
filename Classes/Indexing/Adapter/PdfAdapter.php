@@ -89,20 +89,20 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
     /**
      * @inheritDoc
      */
-    public function extract(string $path, DocumentMetadata $metadata): string
+    public function extract(string $path, DocumentMetadata $metadata): ?IndexableDocument
     {
         if (!$this->licenseService->isValid() || !is_file($path)) {
-            return '';
+            return null;
         }
 
         $pages = $this->extractPages($path);
         $metadata->addAdditional('parser', 'smalot/pdfparser');
         $metadata->addAdditional('pdf_page_count', count($pages));
 
-        return trim(implode("\n\n", array_map(
+        return new IndexableDocument(trim(implode("\n\n", array_map(
             fn (string $page): string => $this->textNormalizer->normalize($page),
             $pages
-        )));
+        ))), $metadata);
     }
 
 
