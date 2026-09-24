@@ -35,6 +35,20 @@ final readonly class PdfLayoutRenderer
     }
 
     /**
+     * Serializes ordinary page-wide prose without introducing table-cell
+     * separators between PDF text objects on the same visual line.
+     *
+     * @param array<int, array{y: float, parts: array<int, array{xMin: float, xMax: float, text: string}>}> $rows
+     */
+    public function renderPlainRows(array $rows): string
+    {
+        return implode("\n", array_map(
+            static fn (array $row): string => implode(' ', array_column($row['parts'], 'text')),
+            $rows,
+        ));
+    }
+
+    /**
      * @param array<int, array{y: float, parts: array<int, array{xMin: float, xMax: float, text: string}>}> $rows
      */
     public function renderColumns(array $rows, float $split): string
@@ -81,7 +95,7 @@ final readonly class PdfLayoutRenderer
             }
         }
 
-        return implode("\n\n", array_filter([
+        return $this->joinSequentialBlocks(array_filter([
             implode("\n", $before),
             implode("\n", $left),
             implode("\n", $right),
@@ -117,10 +131,106 @@ final readonly class PdfLayoutRenderer
                 $sideRows,
             ));
 
-        return implode("\n\n", array_filter([
+        return $this->joinSequentialBlocks(array_filter([
             $renderSide($leftRows),
             $renderSide($rightRows),
         ], static fn (string $block): bool => $block !== ''));
+    }
+
+    /**
+     * Renders three or more independent card-like columns from top to bottom,
+     * preserving leading headings before the first shared card row.
+     *
+     * @param array<int, array{y: float, parts: array<int, array<string, mixed>>}> $rows
+     * @param array<int, float> $splits
+     */
+    public function renderMultiColumnRegion(array $rows, array $splits): string
+    {
+        sort($splits);
+        $columnCount = count($splits) + 1;
+        $participation = array_fill(0, $columnCount, []);
+        $partitionedRows = [];
+
+        foreach ($rows as $rowIndex => $row) {
+            $columns = array_fill(0, $columnCount, []);
+            foreach ($row['parts'] as $part) {
+                $atomsByColumn = array_fill(0, $columnCount, []);
+                foreach (($part['atoms'] ?? []) ?: [] as $atom) {
+                    $column = 0;
+                    while (isset($splits[$column]) && (float)$atom['x'] >= $splits[$column]) {
+                        $column++;
+                    }
+                    $atomsByColumn[$column][] = $atom;
+                }
+                foreach ($atomsByColumn as $column => $atoms) {
+                    if ($atoms !== []) {
+                        $columns[$column][] = $this->positionedTextReader->createSegment($atoms);
+                        $participation[$column][$rowIndex] = true;
+                    }
+                }
+            }
+            $partitionedRows[$rowIndex] = $columns;
+        }
+
+        $firstSharedRow = null;
+        foreach (array_keys($rows) as $rowIndex) {
+            if (array_reduce(
+                $participation,
+                static fn (bool $all, array $items): bool => $all && isset($items[$rowIndex]),
+                true,
+            )) {
+                $firstSharedRow = $rowIndex;
+                break;
+            }
+        }
+        if ($firstSharedRow === null) {
+            return $this->renderRows($rows);
+        }
+
+        $blocks = [];
+        if ($firstSharedRow > 0) {
+            $blocks[] = $this->renderRows(array_slice($rows, 0, $firstSharedRow));
+        }
+        for ($column = 0; $column < $columnCount; $column++) {
+            $lines = [];
+            foreach ($partitionedRows as $rowIndex => $columns) {
+                if ($rowIndex < $firstSharedRow || $columns[$column] === []) {
+                    continue;
+                }
+                $lines[] = implode(' ', array_column($columns[$column], 'text'));
+            }
+            if ($lines !== []) {
+                $blocks[] = implode("\n", $lines);
+            }
+        }
+
+        return $this->joinSequentialBlocks($blocks);
+    }
+
+    /**
+     * Keeps paragraphs separated, except for an explicit hyphenated word that
+     * continues at the start of the next geometrical column.
+     *
+     * @param array<int, string> $blocks
+     */
+    private function joinSequentialBlocks(array $blocks): string
+    {
+        $result = '';
+        foreach ($blocks as $block) {
+            $block = trim($block);
+            if ($block === '') {
+                continue;
+            }
+            if ($result !== ''
+                && preg_match('/\p{L}-$/u', $result) === 1
+                && preg_match('/^\p{Ll}/u', $block) === 1
+            ) {
+                $result = (preg_replace('/-$/u', '', $result) ?? $result) . $block;
+                continue;
+            }
+            $result .= ($result === '' ? '' : "\n\n") . $block;
+        }
+        return $result;
     }
 
     /**
@@ -293,7 +403,7 @@ final readonly class PdfLayoutRenderer
      * @param array{y: float, parts: array<int, array<string, mixed>>} $row
      * @return array{left: array<int, array<string, mixed>>, right: array<int, array<string, mixed>>}
      */
-    private function partitionRowAtSplit(array $row, float $split): array
+    public function partitionRowAtSplit(array $row, float $split): array
     {
         $left = [];
         $right = [];

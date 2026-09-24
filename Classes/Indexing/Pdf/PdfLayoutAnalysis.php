@@ -22,6 +22,7 @@ final readonly class PdfLayoutAnalysis
         public int $columnCount,
         public int $tableRowCount,
         public float $confidence,
+        public bool $requiresPositionedText = false,
     ) {
     }
 }

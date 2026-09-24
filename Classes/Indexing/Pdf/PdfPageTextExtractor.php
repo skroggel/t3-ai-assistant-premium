@@ -59,6 +59,17 @@ final readonly class PdfPageTextExtractor
             );
         }
 
+        if ($analysis->requiresPositionedText && $analysis->text !== '') {
+            return new PdfPageExtractionResult(
+                $analysis->text,
+                'positioned-aligned',
+                $analysis->layoutType,
+                $analysis->columnCount,
+                $analysis->tableRowCount,
+                $analysis->confidence,
+            );
+        }
+
         if ($nativeText !== '') {
             return new PdfPageExtractionResult(
                 $nativeText,

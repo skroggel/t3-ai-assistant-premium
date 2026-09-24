@@ -32,6 +32,20 @@ final class PdfSuspiciousOverlapDetectorTest extends TestCase
         self::assertSame([], $warnings);
     }
 
+    public function testIgnoresParserCoordinatesForOneContinuousStyledTextRun(): void
+    {
+        $warnings = (new PdfSuspiciousOverlapDetector())->detect(
+            [
+                $this->entry(20, 500, 'Regular text'),
+                $this->entry(20, 500, 'bold text'),
+                $this->entry(20, 500, 'regular again'),
+            ],
+            [0 => false, 1 => true, 2 => true],
+        );
+
+        self::assertSame([], $warnings);
+    }
+
     /** @return array<int, mixed> */
     private function entry(float $x, float $y, string $text): array
     {

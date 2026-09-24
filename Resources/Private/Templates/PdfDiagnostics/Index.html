@@ -17,6 +17,18 @@
 
         <form method="post" enctype="multipart/form-data" class="aiassistant-pdf-diagnostics__form">
             <input type="hidden" name="formToken" value="{formToken}" />
+            <div class="aiassistant-pdf-diagnostics__chunk-config">
+                <label for="pdf-diagnostics-indexer"><strong>Qdrant chunk configuration</strong></label>
+                <select id="pdf-diagnostics-indexer" name="indexerConfigUid">
+                    <f:for each="{chunkingConfigurationOptions}" as="configuration">
+                        <f:if condition="{configuration.uid} == {selectedChunkingConfigurationUid}">
+                            <f:then><option value="{configuration.uid}" selected="selected">{configuration.label}</option></f:then>
+                            <f:else><option value="{configuration.uid}">{configuration.label}</option></f:else>
+                        </f:if>
+                    </f:for>
+                </select>
+                <small>The preview uses the selected file indexer's real chunk settings.</small>
+            </div>
             <label for="pdf-diagnostics-file"><strong>PDF file</strong></label>
             <div class="aiassistant-pdf-diagnostics__form-controls">
                 <input
@@ -98,6 +110,12 @@
                             </div>
                         </f:if>
 
+                        <div class="aiassistant-pdf-diagnostics__granularity" role="group" aria-label="Diagnostic detail" data-pdf-diagnostics-granularity>
+                            <span>View:</span>
+                            <button type="button" class="is-active" data-pdf-diagnostics-granularity-option="lines" aria-pressed="true">Lines</button>
+                            <button type="button" data-pdf-diagnostics-granularity-option="objects" aria-pressed="false">Text objects</button>
+                        </div>
+
                         <div class="aiassistant-pdf-diagnostics__page-layout">
                             <div class="aiassistant-pdf-diagnostics__preview-column">
                                 <div class="aiassistant-pdf-diagnostics__column-heading">
@@ -114,14 +132,29 @@
                                                     <div
                                                         class="aiassistant-pdf-diagnostics__layout-region"
                                                         data-layout-region-id="{layoutRegion.id}"
+                                                        data-pdf-diagnostics-layer="layout"
+                                                        hidden="hidden"
                                                         style="--layout-hue:{layoutRegion.hue};left:{layoutRegion.left}%;top:{layoutRegion.top}%;width:{layoutRegion.width}%;height:{layoutRegion.height}%"
                                                     ></div>
+                                                </f:for>
+                                                <f:for each="{page.lineRegions}" as="region">
+                                                    <button
+                                                        type="button"
+                                                        class="aiassistant-pdf-diagnostics__region aiassistant-pdf-diagnostics__region--line"
+                                                        data-region-id="{region.id}"
+                                                        data-pdf-diagnostics-layer="lines"
+                                                        title="Line {region.number}: {region.text}"
+                                                        aria-label="Line {region.number}: {region.text}"
+                                                        style="--region-hue:{region.hue};left:{region.left}%;top:{region.top}%;width:{region.width}%;height:{region.height}%"
+                                                    ><span>{region.number}</span></button>
                                                 </f:for>
                                                 <f:for each="{page.regions}" as="region">
                                                     <button
                                                         type="button"
                                                         class="aiassistant-pdf-diagnostics__region"
                                                         data-region-id="{region.id}"
+                                                        data-pdf-diagnostics-layer="objects"
+                                                        hidden="hidden"
                                                         title="Region {region.number}: {region.text}"
                                                         aria-label="Region {region.number}: {region.text}"
                                                         style="--region-hue:{region.hue};left:{region.left}%;top:{region.top}%;width:{region.width}%;height:{region.height}%"
@@ -159,6 +192,16 @@
                                         tabindex="-1"
                                         data-pdf-diagnostics-tab="layout"
                                     >Layout analysis</button>
+                                    <button
+                                        id="pdf-diagnostics-page-{page.number}-chunks-tab"
+                                        type="button"
+                                        class="aiassistant-pdf-diagnostics__viewer-tab"
+                                        role="tab"
+                                        aria-selected="false"
+                                        aria-controls="pdf-diagnostics-page-{page.number}-chunks-panel"
+                                        tabindex="-1"
+                                        data-pdf-diagnostics-tab="chunks"
+                                    >Qdrant-Chunks</button>
                                 </div>
 
                                 <div
@@ -168,7 +211,7 @@
                                     aria-labelledby="pdf-diagnostics-page-{page.number}-text-tab"
                                     data-pdf-diagnostics-panel="text"
                                 >
-                                    <p class="aiassistant-pdf-diagnostics__viewer-hint">Highlighted segments correspond to the coordinate regions in the PDF view.</p>
+                                    <p class="aiassistant-pdf-diagnostics__viewer-hint">Normalized PDF adapter output passed to the indexer before configured chunking. Highlights correspond to coordinate regions in the PDF view.</p>
                                     <f:if condition="{page.empty}">
                                         <f:then>
                                             <div class="aiassistant-config__notice aiassistant-config__notice--warning">
@@ -176,7 +219,8 @@
                                             </div>
                                         </f:then>
                                         <f:else>
-                                            <pre class="aiassistant-config__code-block"><f:format.raw>{page.annotatedText}</f:format.raw></pre>
+                                            <pre class="aiassistant-config__code-block" data-pdf-diagnostics-text-layer="lines"><f:format.raw>{page.annotatedLineText}</f:format.raw></pre>
+                                            <pre class="aiassistant-config__code-block" data-pdf-diagnostics-text-layer="objects" hidden="hidden"><f:format.raw>{page.annotatedText}</f:format.raw></pre>
                                         </f:else>
                                     </f:if>
                                 </div>
@@ -199,7 +243,7 @@
                                                 style="--layout-hue:{layoutRegion.hue}"
                                             >
                                                 <span class="aiassistant-pdf-diagnostics__layout-map-number">{layoutRegion.number}</span>
-                                                <span class="aiassistant-pdf-diagnostics__layout-map-shape" aria-hidden="true"><i></i><i></i></span>
+                                                <span class="aiassistant-pdf-diagnostics__layout-map-shape" aria-hidden="true"><i></i><i></i><i></i></span>
                                                 <span class="aiassistant-pdf-diagnostics__layout-map-label">
                                                     <strong>{layoutRegion.label}</strong>
                                                     <f:if condition="{layoutRegion.excluded}">
@@ -217,6 +261,54 @@
                                             </button>
                                         </f:for>
                                     </div>
+                                </div>
+
+                                <div
+                                    id="pdf-diagnostics-page-{page.number}-chunks-panel"
+                                    class="aiassistant-pdf-diagnostics__viewer-panel"
+                                    role="tabpanel"
+                                    aria-labelledby="pdf-diagnostics-page-{page.number}-chunks-tab"
+                                    data-pdf-diagnostics-panel="chunks"
+                                    hidden="hidden"
+                                >
+                                    <p class="aiassistant-pdf-diagnostics__viewer-hint">
+                                        Exact texts written to <code>payload.text</code> after whitespace normalization and configured chunking. Embeddings and metadata are not shown.
+                                    </p>
+                                    <dl class="aiassistant-pdf-diagnostics__chunk-settings">
+                                        <div><dt>Configuration</dt><dd>{diagnosticResult.chunking.title} (#{diagnosticResult.chunking.uid})</dd></div>
+                                        <div><dt>Chunk size</dt><dd>{diagnosticResult.chunking.chunkSizeLabel}</dd></div>
+                                        <div><dt>Overlap</dt><dd>{diagnosticResult.chunking.chunkOverlapLabel}</dd></div>
+                                        <div><dt>Maximum</dt><dd>{diagnosticResult.chunking.maxChunksLabel}</dd></div>
+                                        <div><dt>Minimum chars</dt><dd>{diagnosticResult.chunking.minChunkCharsLabel}</dd></div>
+                                    </dl>
+                                    <f:if condition="{page.chunks}">
+                                        <f:then>
+                                            <div class="aiassistant-pdf-diagnostics__chunks" aria-label="Qdrant chunks for page {page.number}">
+                                                <f:for each="{page.chunks}" as="chunk">
+                                                    <article
+                                                        class="aiassistant-pdf-diagnostics__chunk"
+                                                        tabindex="0"
+                                                        role="button"
+                                                        aria-pressed="false"
+                                                        data-pdf-diagnostics-chunk
+                                                        data-region-ids="{chunk.regionIds}"
+                                                        aria-label="Chunk {chunk.number}, characters {chunk.startDisplay} to {chunk.endDisplay}"
+                                                    >
+                                                        <header>
+                                                            <strong>Chunk {chunk.number}</strong>
+                                                            <span>characters {chunk.startDisplay}–{chunk.endDisplay} · payload.text · {chunk.characterCount} characters</span>
+                                                        </header>
+                                                        <pre>{chunk.text}</pre>
+                                                    </article>
+                                                </f:for>
+                                            </div>
+                                        </f:then>
+                                        <f:else>
+                                            <div class="aiassistant-config__notice aiassistant-config__notice--warning">
+                                                This page produces no Qdrant chunk with the selected configuration.
+                                            </div>
+                                        </f:else>
+                                    </f:if>
                                 </div>
                             </div>
                         </div>

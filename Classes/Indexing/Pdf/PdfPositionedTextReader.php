@@ -31,7 +31,7 @@ final class PdfPositionedTextReader
     {
         $atoms = [];
         $seen = [];
-        foreach ($positionedText as $entry) {
+        foreach ($positionedText as $sourceIndex => $entry) {
             if (!isset($entry[0], $entry[1]) || !is_array($entry[0])) {
                 continue;
             }
@@ -45,11 +45,12 @@ final class PdfPositionedTextReader
                 continue;
             }
 
-            $text = trim(strtr((string)$entry[1], [
+            $rawText = strtr((string)$entry[1], [
                 "\u{FB00}" => 'ff', "\u{FB01}" => 'fi', "\u{FB02}" => 'fl',
                 "\u{FB03}" => 'ffi', "\u{FB04}" => 'ffl', "\u{00AD}" => '',
                 "\u{00A0}" => ' ', "\u{202F}" => ' ',
-            ]));
+            ]);
+            $text = trim($rawText);
             if ($text === '') {
                 continue;
             }
@@ -57,15 +58,29 @@ final class PdfPositionedTextReader
             $x = (float)$matrix[4];
             $y = (float)$matrix[5];
             $fontSize = $this->resolveEffectiveFontSize($entry, $matrix);
+            $horizontalScale = $this->resolveEffectiveHorizontalScale($entry, $matrix);
+            $verticalScale = $this->resolveEffectiveVerticalScale($entry, $matrix);
+            $lineCenter = $y + $verticalScale * 0.3;
             $key = sprintf('%.2f:%.2f:%s', $x, $y, $text);
             if (isset($seen[$key])) {
                 continue;
             }
             $seen[$key] = true;
-            $atoms[] = ['x' => $x, 'y' => $y, 'fontSize' => $fontSize, 'text' => $text];
+            $atoms[] = [
+                'x' => $x,
+                'y' => $y,
+                'fontSize' => $fontSize,
+                'horizontalScale' => $horizontalScale,
+                'verticalScale' => $verticalScale,
+                'lineCenter' => $lineCenter,
+                'fontId' => (string)($entry[2] ?? ''),
+                'rawText' => $rawText,
+                'sourceIndex' => $sourceIndex,
+                'text' => $text,
+            ];
         }
         usort($atoms, static function (array $left, array $right): int {
-            $byY = $right['y'] <=> $left['y'];
+            $byY = $right['lineCenter'] <=> $left['lineCenter'];
             return $byY !== 0 ? $byY : $left['x'] <=> $right['x'];
         });
         return $atoms;
@@ -96,29 +111,71 @@ final class PdfPositionedTextReader
         return max(1.0, $declaredFontSize);
     }
 
+    /**
+     * Returns the rendered horizontal font scale. Unlike the conservative
+     * scalar used by layout heuristics, this value includes text-matrix
+     * scaling and is intended for glyph-width calculations.
+     *
+     * @param array<int, mixed> $entry
+     * @param array<int, mixed> $matrix
+     */
+    private function resolveEffectiveHorizontalScale(array $entry, array $matrix): float
+    {
+        $declaredFontSize = isset($entry[3]) ? abs((float)$entry[3]) : 1.0;
+        $matrixScale = hypot((float)$matrix[0], (float)$matrix[1]);
+        return max(0.01, $declaredFontSize * max(0.01, $matrixScale));
+    }
+
+    /**
+     * Returns the rendered vertical font scale for diagnostic overlays. It is
+     * kept separate from the conservative fontSize used by reading-order
+     * heuristics so visual corrections cannot change indexed text.
+     *
+     * @param array<int, mixed> $entry
+     * @param array<int, mixed> $matrix
+     */
+    private function resolveEffectiveVerticalScale(array $entry, array $matrix): float
+    {
+        $declaredFontSize = isset($entry[3]) ? abs((float)$entry[3]) : 1.0;
+        $matrixScale = hypot((float)$matrix[2], (float)$matrix[3]);
+        return max(0.01, $declaredFontSize * max(0.01, $matrixScale));
+    }
+
     private function createRows(array $atoms): array
     {
         $rows = [];
         foreach ($atoms as $atom) {
             $target = null;
             foreach ($rows as $index => $row) {
-                $tolerance = max(1.5, min($atom['fontSize'], $row['fontSize']) * 0.25);
-                if (abs($row['y'] - $atom['y']) <= $tolerance) {
+                $tolerance = max(1.5, min($atom['verticalScale'], $row['verticalScale']) * 0.28);
+                if (abs($row['lineCenter'] - $atom['lineCenter']) <= $tolerance) {
                     $target = $index;
                     break;
                 }
-                if ($row['y'] < $atom['y'] - $tolerance) {
+                if ($row['lineCenter'] < $atom['lineCenter'] - $tolerance) {
                     break;
                 }
             }
             if ($target === null) {
-                $rows[] = ['y' => $atom['y'], 'fontSize' => $atom['fontSize'], 'atoms' => [$atom]];
+                $rows[] = [
+                    'y' => $atom['y'],
+                    'lineCenter' => $atom['lineCenter'],
+                    'fontSize' => $atom['fontSize'],
+                    'verticalScale' => $atom['verticalScale'],
+                    'atoms' => [$atom],
+                ];
                 continue;
             }
             $rows[$target]['atoms'][] = $atom;
+            $atomCount = count($rows[$target]['atoms']);
+            $rows[$target]['lineCenter'] = (
+                $rows[$target]['lineCenter'] * ($atomCount - 1) + $atom['lineCenter']
+            ) / $atomCount;
+            $rows[$target]['y'] = max($rows[$target]['y'], $atom['y']);
             $rows[$target]['fontSize'] = max($rows[$target]['fontSize'], $atom['fontSize']);
+            $rows[$target]['verticalScale'] = max($rows[$target]['verticalScale'], $atom['verticalScale']);
         }
-        usort($rows, static fn (array $left, array $right): int => $right['y'] <=> $left['y']);
+        usort($rows, static fn (array $left, array $right): int => $right['lineCenter'] <=> $left['lineCenter']);
         return $rows;
     }
 
@@ -131,14 +188,18 @@ final class PdfPositionedTextReader
             $parts = [];
             $current = [];
             $currentEnd = null;
+            $currentFontSize = 0.0;
             foreach ($atoms as $atom) {
                 $estimatedWidth = max($atom['fontSize'] * 0.25, mb_strlen($atom['text']) * $atom['fontSize'] * 0.58);
                 $gap = $currentEnd === null ? 0.0 : $atom['x'] - $currentEnd;
-                if ($current !== [] && $gap > max(10.0, $atom['fontSize'] * 1.25)) {
+                $gapTolerance = max(10.0, max($atom['fontSize'], $currentFontSize) * 1.25);
+                if ($current !== [] && $gap > $gapTolerance) {
                     $parts[] = $this->createSegment($current);
                     $current = [];
+                    $currentFontSize = 0.0;
                 }
                 $current[] = $atom;
+                $currentFontSize = max($currentFontSize, $atom['fontSize']);
                 $currentEnd = max($currentEnd ?? $atom['x'], $atom['x'] + $estimatedWidth);
             }
             if ($current !== []) {

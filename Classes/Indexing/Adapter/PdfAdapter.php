@@ -24,10 +24,7 @@ use Madj2k\AiCore\Indexing\Adapter\MultiDocumentAdapterInterface;
 use Madj2k\AiCore\Indexing\DTO\IndexableDocument;
 use Madj2k\AiAssistantPremium\License\LicenseService;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageExtractionResult;
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfMarginArtifactDetector;
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageTextExtractor;
-use Smalot\PdfParser\Config as PdfParserConfig;
-use Smalot\PdfParser\Parser;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfDocumentExtractionService;
 
 /**
  * Class PdfContentAdapter
@@ -49,16 +46,9 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
     public const LINK_TO_MATCHED_PAGE_CONFIGURATION_KEY = 'indexing.pdf.linkToMatchedPage';
 
 
-    /**
-     * Constructor.
-     *
-     * @param \Madj2k\AiAssistantPremium\Indexing\Adapter\PdfTextNormalizer $textNormalizer Text normalizer.
-     */
     public function __construct(
-        private readonly PdfTextNormalizer $textNormalizer,
         private readonly LicenseService $licenseService,
-        private readonly PdfPageTextExtractor $pageTextExtractor,
-        private readonly PdfMarginArtifactDetector $marginArtifactDetector,
+        private readonly PdfDocumentExtractionService $documentExtractionService,
     ) {
 
     }
@@ -106,7 +96,7 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
         $metadata->addAdditional('pdf_page_count', count($pages));
 
         return trim(implode("\n\n", array_map(
-            fn (PdfPageExtractionResult $page): string => $this->textNormalizer->normalize($page->text),
+            static fn ($page): string => $page->normalizedText,
             $pages
         )));
     }
@@ -127,9 +117,9 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
 
         foreach ($pages as $pageIndex => $page) {
             $pageNumber = $pageIndex + 1;
-            $pageMetadata = $this->createPageMetadata($metadata, $pageNumber, $pageCount, $page);
+            $pageMetadata = $this->createPageMetadata($metadata, $pageNumber, $pageCount, $page->result);
             $documents[] = new IndexableDocument(
-                $this->textNormalizer->normalize($page->text),
+                $page->normalizedText,
                 $pageMetadata
             );
         }
@@ -142,38 +132,13 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
      * Extracts raw text from the individual PDF pages.
      *
      * @param string $path PDF file path.
-     * @return array<int, \Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageExtractionResult> Page texts in source order.
+     * @return array<int, \Madj2k\AiAssistantPremium\Indexing\Pdf\PdfExtractedPage> Page texts in source order.
      * @throws \Madj2k\AiCore\Exception\IndexingException
      */
     private function extractPages(string $path): array
     {
         try {
-            $parserConfig = new PdfParserConfig();
-            $parserConfig->setDataTmFontInfoHasToBeIncluded(true);
-            $document = (new Parser([], $parserConfig))->parseFile($path);
-            $documentPages = $document->getPages();
-            $marginAnalysis = $this->marginArtifactDetector->analyze(array_map(
-                static fn ($page): array => [
-                    'positionedText' => $page->getDataTm(),
-                    'details' => $page->getDetails(),
-                ],
-                $documentPages,
-            ));
-            $pages = [];
-
-            foreach ($documentPages as $pageIndex => $page) {
-                $pageMarginAnalysis = $marginAnalysis[$pageIndex] ?? [
-                    'positionedText' => $page->getDataTm(),
-                    'artifacts' => [],
-                ];
-                $pages[] = $this->pageTextExtractor->extract(
-                    $page,
-                    $pageMarginAnalysis['positionedText'],
-                    $pageMarginAnalysis['artifacts'] !== [],
-                );
-            }
-
-            return $pages;
+            return $this->documentExtractionService->extract($path);
         } catch (\Throwable $exception) {
             throw new IndexingException(
                 'Could not extract text from PDF file.',

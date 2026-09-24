@@ -67,6 +67,22 @@ final class PdfMarginArtifactDetectorTest extends TestCase
         self::assertStringContainsString('Variable header 1', $result[0]['artifacts'][0]['text']);
     }
 
+    public function testUsesPageNumberAsFooterAnchorForSinglePageDocument(): void
+    {
+        $result = (new PdfMarginArtifactDetector())->analyze([[
+            'positionedText' => [
+                $this->entry(40, 500, 'Meaningful body text'),
+                $this->entry(40, 29, 'Company contact details'),
+                $this->entry(295, 29, '1'),
+            ],
+            'details' => ['MediaBox' => [0, 0, 595, 842]],
+        ]]);
+
+        self::assertSame(['Meaningful body text'], array_column($result[0]['positionedText'], 1));
+        self::assertSame('footer', $result[0]['artifacts'][0]['type']);
+        self::assertStringContainsString('Company contact details', $result[0]['artifacts'][0]['text']);
+    }
+
     /** @return array<int, mixed> */
     private function entry(float $x, float $y, string $text): array
     {

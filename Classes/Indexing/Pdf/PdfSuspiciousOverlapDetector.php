@@ -24,12 +24,13 @@ final readonly class PdfSuspiciousOverlapDetector
 
     /**
      * @param array<int, array<int, mixed>> $positionedText
+     * @param array<int, bool> $textRunContinuations
      * @return array<int, array{firstText: string, secondText: string, x: float, y: float, overlap: float}>
      */
-    public function detect(array $positionedText): array
+    public function detect(array $positionedText, array $textRunContinuations = []): array
     {
         $objects = [];
-        foreach ($positionedText as $entry) {
+        foreach ($positionedText as $sourceIndex => $entry) {
             if (!isset($entry[0], $entry[1]) || !is_array($entry[0])) {
                 continue;
             }
@@ -55,6 +56,7 @@ final readonly class PdfSuspiciousOverlapDetector
             $fontSize = max(1.0, isset($entry[3]) ? abs((float)$entry[3]) : abs((float)$matrix[3]));
             $width = max($fontSize * 0.25, mb_strlen($text) * $fontSize * 0.58);
             $objects[] = [
+                'sourceIndex' => $sourceIndex,
                 'text' => $text,
                 'xMin' => (float)$matrix[4],
                 'xMax' => (float)$matrix[4] + $width,
@@ -69,6 +71,13 @@ final readonly class PdfSuspiciousOverlapDetector
             for ($rightIndex = $leftIndex + 1; $rightIndex < $count; $rightIndex++) {
                 $right = $objects[$rightIndex];
                 if ($left['text'] === $right['text']) {
+                    continue;
+                }
+                if ($this->belongsToSameContinuousTextRun(
+                    (int)$left['sourceIndex'],
+                    (int)$right['sourceIndex'],
+                    $textRunContinuations,
+                )) {
                     continue;
                 }
                 $yTolerance = max(1.5, min($left['fontSize'], $right['fontSize']) * 0.2);
@@ -104,5 +113,22 @@ final readonly class PdfSuspiciousOverlapDetector
         }
 
         return $warnings;
+    }
+
+    /** @param array<int, bool> $continuations */
+    private function belongsToSameContinuousTextRun(
+        int $firstIndex,
+        int $secondIndex,
+        array $continuations,
+    ): bool {
+        if ($secondIndex <= $firstIndex) {
+            return false;
+        }
+        for ($index = $firstIndex + 1; $index <= $secondIndex; $index++) {
+            if (!($continuations[$index] ?? false)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

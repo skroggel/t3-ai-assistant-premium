@@ -46,6 +46,24 @@ final class PdfPageTextExtractorTest extends TestCase
         self::assertSame('Native paragraph', $result->text);
     }
 
+    public function testUsesPositionedOrderForRepeatedOpticallyAlignedLabels(): void
+    {
+        $page = $this->createStub(Page::class);
+        $page->method('getText')->willReturn('Introduction 03 Taste Solutions 04');
+        $page->method('getDataTm')->willReturn([
+            [[1, 0, 0, 1, 199.58, 603.55], '03', 'F1', '20.04'],
+            [[1, 0, 0, 1, 243.14, 607.03], 'Introduction', 'F2', '11.04'],
+            [[1, 0, 0, 1, 199.58, 568.22], '04', 'F1', '20.04'],
+            [[1, 0, 0, 1, 243.14, 571.70], 'Taste Solutions', 'F2', '11.04'],
+        ]);
+        $subject = new PdfPageTextExtractor(new PdfPageLayoutAnalyzer());
+
+        $result = $subject->extract($page);
+
+        self::assertSame('positioned-aligned', $result->strategy);
+        self::assertSame("03 Introduction\n04 Taste Solutions", $result->text);
+    }
+
     public function testUsesFilteredPositionedTextWhenMarginArtifactsWereExcluded(): void
     {
         $page = $this->createStub(Page::class);

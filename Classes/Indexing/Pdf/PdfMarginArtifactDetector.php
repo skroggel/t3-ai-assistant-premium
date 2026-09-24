@@ -193,15 +193,17 @@ final readonly class PdfMarginArtifactDetector
     private function detectPageNumberSequences(array $candidates, int $pageCount): array
     {
         $numberCandidates = [];
+        $confirmed = [];
         foreach ($candidates as $candidate) {
             if (preg_match('/^(?:page\s*)?(\d+)(?:\s*(?:of|\/)\s*\d+)?$/iu', $candidate['text'], $matches) !== 1) {
                 continue;
             }
             $candidate['printedPageNumber'] = (int)$matches[1];
+            if ($pageCount === 1 && $candidate['printedPageNumber'] === 1) {
+                $confirmed[$candidate['key']] = true;
+            }
             $numberCandidates[$candidate['zone']][] = $candidate;
         }
-
-        $confirmed = [];
         foreach ($numberCandidates as $zoneCandidates) {
             foreach ($this->clusterByPosition($zoneCandidates) as $cluster) {
                 $byOffset = [];

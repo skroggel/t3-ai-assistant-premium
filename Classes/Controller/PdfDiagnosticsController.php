@@ -12,7 +12,10 @@ declare(strict_types=1);
 namespace Madj2k\AiAssistantPremium\Controller;
 
 use Madj2k\AiAssistant\Backend\Form\BackendFormTokenService;
+use Madj2k\AiAssistant\Indexing\Domain\Model\IndexerConfig;
+use Madj2k\AiAssistant\Indexing\Domain\Repository\IndexerConfigRepository;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfDiagnosticService;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfQdrantChunkPreviewService;
 use Madj2k\AiAssistantPremium\License\LicenseService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -34,6 +37,8 @@ final readonly class PdfDiagnosticsController
         private readonly ModuleTemplateFactory $moduleTemplateFactory,
         private readonly BackendFormTokenService $formTokenService,
         private readonly PdfDiagnosticService $diagnosticService,
+        private readonly PdfQdrantChunkPreviewService $chunkPreviewService,
+        private readonly IndexerConfigRepository $indexerConfigRepository,
         private readonly LicenseService $licenseService,
     ) {
     }
@@ -43,6 +48,8 @@ final readonly class PdfDiagnosticsController
         $formProtection = $this->formTokenService->createFormProtection($backendRequest);
         $result = null;
         $error = '';
+        [$chunkingOptions, $selectedChunkingUid, $chunkingConfiguration] =
+            $this->resolveChunkingConfiguration($backendRequest);
 
         if (strtoupper($backendRequest->getMethod()) === 'POST') {
             if (!$this->formTokenService->validate($backendRequest, $formProtection)) {
@@ -52,9 +59,12 @@ final readonly class PdfDiagnosticsController
             } else {
                 try {
                     $upload = $this->resolveUpload($backendRequest);
-                    $result = $this->diagnosticService->inspect(
-                        $this->resolveTemporaryPath($upload),
-                        $upload->getClientFilename() ?: 'uploaded.pdf',
+                    $result = $this->chunkPreviewService->addChunkPreview(
+                        $this->diagnosticService->inspect(
+                            $this->resolveTemporaryPath($upload),
+                            $upload->getClientFilename() ?: 'uploaded.pdf',
+                        ),
+                        $chunkingConfiguration,
                     );
                 } catch (\Throwable $exception) {
                     $error = $exception->getMessage();
@@ -69,6 +79,8 @@ final readonly class PdfDiagnosticsController
             'diagnosticResult' => $result,
             'diagnosticError' => $error,
             'maximumUploadMegabytes' => (int)(self::MAX_UPLOAD_BYTES / 1024 / 1024),
+            'chunkingConfigurationOptions' => $chunkingOptions,
+            'selectedChunkingConfigurationUid' => $selectedChunkingUid,
         ]);
 
         GeneralUtility::makeInstance(AssetCollector::class)
@@ -110,5 +122,55 @@ final readonly class PdfDiagnosticsController
         }
 
         return $path;
+    }
+
+    /**
+     * @return array{0: array<int, array{uid: int, label: string}>, 1: int, 2: array{uid: int, title: string, chunkSize: int, chunkOverlap: int, maxChunks: int, minChunkChars: int}}
+     */
+    private function resolveChunkingConfiguration(ServerRequestInterface $request): array
+    {
+        $configurations = [];
+        foreach ($this->indexerConfigRepository->findByIndexerIdentifier('aiassistant.indexer.file') as $configuration) {
+            if ($configuration instanceof IndexerConfig) {
+                $configurations[(int)$configuration->getUid()] = $configuration;
+            }
+        }
+
+        $requestedUid = (int)(((array)$request->getParsedBody())['indexerConfigUid'] ?? 0);
+        $selectedUid = isset($configurations[$requestedUid])
+            ? $requestedUid
+            : (int)(array_key_first($configurations) ?? 0);
+        $selected = $configurations[$selectedUid] ?? null;
+
+        if (!$selected instanceof IndexerConfig) {
+            return [[[
+                'uid' => 0,
+                'label' => 'Service defaults (no file indexer configured)',
+            ]], 0, [
+                'uid' => 0,
+                'title' => 'Service defaults',
+                'chunkSize' => 0,
+                'chunkOverlap' => 0,
+                'maxChunks' => 0,
+                'minChunkChars' => 0,
+            ]];
+        }
+
+        $options = [];
+        foreach ($configurations as $uid => $configuration) {
+            $options[] = [
+                'uid' => $uid,
+                'label' => sprintf('%s (#%d)', $configuration->getTitle(), $uid),
+            ];
+        }
+
+        return [$options, $selectedUid, [
+            'uid' => $selectedUid,
+            'title' => $selected->getTitle(),
+            'chunkSize' => $selected->getChunkSize(),
+            'chunkOverlap' => $selected->getChunkOverlap(),
+            'maxChunks' => $selected->getMaxChunks(),
+            'minChunkChars' => $selected->getMinChunkChars(),
+        ]];
     }
 }
