@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Madj2k\AiAssistantPremium\Tests\Unit\Indexing\Pdf;
 
+use Madj2k\AiAssistantPremium\Backend\PdfDiagnostics\PdfLayoutDiagnosticsProvider;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageLayoutAnalyzer;
 use PHPUnit\Framework\TestCase;
 
@@ -66,7 +67,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         self::assertLessThan(strpos($result->text, 'Left prose line 1'), strpos($result->text, 'Full width heading'));
         self::assertLessThan(strpos($result->text, 'Right prose line 1'), strpos($result->text, 'Left prose line 5'));
 
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
         self::assertSame('full-width', $regions[0]['type']);
         self::assertSame('columns', $regions[1]['type']);
         self::assertSame(2, $regions[1]['columnCount']);
@@ -84,7 +85,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
             $this->entry(20, 436, 'Second highlighted closing line'),
         ];
 
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertCount(3, $regions);
         self::assertSame(['full-width', 'full-width', 'full-width'], array_column($regions, 'type'));
@@ -102,7 +103,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
             $data[] = $this->entry(350, 516 - $row * 14, 'Right prose line ' . ($row + 1));
         }
 
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
         $analysis = $subject->analyze($data);
 
         self::assertCount(2, $regions);
@@ -137,7 +138,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
             $this->entry(420, 130, 'Third of three blocks'),
         ];
 
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
         $analysis = $subject->analyze($data);
 
         self::assertSame(
@@ -173,7 +174,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         ];
 
         $analysis = $subject->analyze($data);
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertSame('columns', $analysis->layoutType);
         self::assertSame('column-blocks', $regions[0]['type']);
@@ -208,7 +209,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         );
 
         $result = $subject->analyze($data);
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertSame('columns', $result->layoutType);
         self::assertCount(1, $regions);
@@ -243,7 +244,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         ];
 
         $result = $subject->analyze($data);
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertSame('columns', $result->layoutType);
         self::assertCount(1, $regions);
@@ -293,7 +294,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         }
 
         $analysis = $subject->analyze($data);
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertSame('mixed', $analysis->layoutType);
         self::assertContains('multi-column-blocks', array_column($regions, 'type'));
@@ -321,7 +322,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         }
 
         $analysis = $subject->analyze($data);
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertSame('multi-column-blocks', $regions[0]['type']);
         self::assertSame(3, $regions[0]['columnCount']);
@@ -342,7 +343,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         $data[] = $this->entry(30, 420, 'Left closing');
         $data[] = $this->entry(170, 406, 'Middle closing');
 
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertNotContains('multi-column-blocks', array_column($regions, 'type'));
     }
@@ -363,7 +364,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         }
 
         $analysis = $subject->analyze($data);
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertNotContains('multi-column-blocks', array_column($regions, 'type'));
         self::assertLessThan(strpos($analysis->text, 'Left prose line 1'), strpos($analysis->text, '-ABV beers'));
@@ -384,7 +385,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         $data[] = $this->entry(20, 412, 'Left asymmetric continuation two');
 
         $analysis = $subject->analyze($data);
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertSame(['full-width', 'columns'], array_column($regions, 'type'));
         self::assertLessThan(
@@ -408,7 +409,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         $data[] = $this->entry(40, 338, 'Third full width callout line');
 
         $result = $subject->analyze($data);
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertSame('mixed', $result->layoutType);
         self::assertSame('columns', $regions[0]['type']);
@@ -442,7 +443,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         $data[] = $this->entry(28, 376, 'A shorter bullet');
 
         $result = $subject->analyze($data);
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertSame('mixed', $result->layoutType);
         self::assertSame('columns', $regions[0]['type']);
@@ -498,7 +499,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         ];
 
         $result = $subject->analyze($data);
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertSame('columns', $result->layoutType);
         self::assertCount(1, $regions);
@@ -523,7 +524,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
             $this->entry(350, 300, 'Right lower caption'),
         ];
 
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertSame('full-width', $regions[0]['type']);
         self::assertSame('full-width', $regions[1]['type']);
@@ -561,7 +562,7 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         ];
 
         $analysis = $subject->analyze($data);
-        $regions = $subject->diagnoseRegions($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
 
         self::assertSame('nested-columns', $regions[0]['type']);
         self::assertLessThan(

@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Madj2k\AiAssistantPremium\Tests\Unit\Indexing\Pdf;
+namespace Madj2k\AiAssistantPremium\Tests\Unit\Indexing\Pdf\Preprocessing;
 
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPositionedTextAligner;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\Preprocessing\PdfPositionedTextAligner;
 use PHPUnit\Framework\TestCase;
 
 final class PdfPositionedTextAlignerTest extends TestCase

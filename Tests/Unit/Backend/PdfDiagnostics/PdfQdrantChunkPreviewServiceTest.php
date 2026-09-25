@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Madj2k\AiAssistantPremium\Tests\Unit\Indexing\Pdf;
+namespace Madj2k\AiAssistantPremium\Tests\Unit\Backend\PdfDiagnostics;
 
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfQdrantChunkPreviewService;
+use Madj2k\AiAssistantPremium\Backend\PdfDiagnostics\PdfQdrantChunkPreviewService;
 use Madj2k\AiCore\Indexing\TextChunker;
 use PHPUnit\Framework\TestCase;
 
@@ -43,11 +43,11 @@ final class PdfQdrantChunkPreviewServiceTest extends TestCase
         self::assertSame(9, $result['pages'][0]['chunks'][1]['start']);
         self::assertSame(21, $result['pages'][0]['chunks'][1]['end']);
         self::assertSame('PDF indexer', $result['chunking']['title']);
-        self::assertSame('12', $result['chunking']['chunkSizeLabel']);
-        self::assertSame('2', $result['chunking']['maxChunksLabel']);
+        self::assertSame(12, $result['chunking']['chunkSize']);
+        self::assertSame(2, $result['chunking']['maxChunks']);
     }
 
-    public function testLabelsZeroValuesAsProductionServiceDefaults(): void
+    public function testPreservesZeroValuesUsedAsProductionServiceDefaults(): void
     {
         $subject = new PdfQdrantChunkPreviewService(new TextChunker());
 
@@ -62,9 +62,9 @@ final class PdfQdrantChunkPreviewServiceTest extends TestCase
             'minChunkChars' => 0,
         ]);
 
-        self::assertSame('service default', $result['chunking']['chunkSizeLabel']);
-        self::assertSame('service default', $result['chunking']['chunkOverlapLabel']);
-        self::assertSame('unlimited', $result['chunking']['maxChunksLabel']);
-        self::assertSame('service default', $result['chunking']['minChunkCharsLabel']);
+        self::assertSame(0, $result['chunking']['chunkSize']);
+        self::assertSame(0, $result['chunking']['chunkOverlap']);
+        self::assertSame(0, $result['chunking']['maxChunks']);
+        self::assertSame(0, $result['chunking']['minChunkChars']);
     }
 }

@@ -12,7 +12,7 @@ services:
   Madj2k\AiAssistantPremium\Controller\SearchController:
     public: true
 
-  Madj2k\AiAssistantPremium\Controller\PdfDiagnosticsController:
+  Madj2k\AiAssistantPremium\Backend\Controller\PdfDiagnosticsController:
     public: true
 
   Madj2k\AiAssistantPremium\Assistant\Pipeline\Processor\SearchResultRetrieverProcessor:

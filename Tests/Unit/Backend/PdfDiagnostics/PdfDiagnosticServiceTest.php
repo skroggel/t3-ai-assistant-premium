@@ -1,18 +1,20 @@
 <?php
 declare(strict_types=1);
 
-namespace Madj2k\AiAssistantPremium\Tests\Unit\Indexing\Pdf;
+namespace Madj2k\AiAssistantPremium\Tests\Unit\Backend\PdfDiagnostics;
 
+use Madj2k\AiAssistantPremium\Backend\PdfDiagnostics\PdfDiagnosticService;
+use Madj2k\AiAssistantPremium\Backend\PdfDiagnostics\PdfLayoutDiagnosticsProvider;
+use Madj2k\AiAssistantPremium\Backend\PdfDiagnostics\PdfSuspiciousOverlapDetector;
+use Madj2k\AiAssistantPremium\Backend\PdfDiagnostics\PdfTextRegionMatcher;
+use Madj2k\AiAssistantPremium\Backend\PdfDiagnostics\PdfVectorArtworkDetector;
 use Madj2k\AiAssistantPremium\Indexing\Adapter\PdfTextNormalizer;
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfDiagnosticService;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfDocumentExtractionService;
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfLayoutRenderer;
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfMarginArtifactDetector;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\Rendering\PdfLayoutRenderer;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\Preprocessing\PdfMarginArtifactDetector;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageLayoutAnalyzer;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageTextExtractor;
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPositionedTextReader;
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfSuspiciousOverlapDetector;
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfVectorArtworkDetector;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\Geometry\PdfPositionedTextReader;
 use PHPUnit\Framework\TestCase;
 use Smalot\PdfParser\Font;
 
@@ -216,8 +218,9 @@ final class PdfDiagnosticServiceTest extends TestCase
             ),
             $normalizer,
             $reader,
+            new PdfTextRegionMatcher(),
             new PdfSuspiciousOverlapDetector(),
-            $analyzer,
+            new PdfLayoutDiagnosticsProvider($reader),
             new PdfVectorArtworkDetector($reader),
         );
         $method = new \ReflectionMethod($subject, 'createVisualization');

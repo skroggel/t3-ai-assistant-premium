@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Madj2k\AiAssistantPremium\Tests\Unit\Indexing\Pdf;
+namespace Madj2k\AiAssistantPremium\Tests\Unit\Backend\PdfDiagnostics;
 
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfSuspiciousOverlapDetector;
+use Madj2k\AiAssistantPremium\Backend\PdfDiagnostics\PdfSuspiciousOverlapDetector;
 use PHPUnit\Framework\TestCase;
 
 final class PdfSuspiciousOverlapDetectorTest extends TestCase

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use Madj2k\AiAssistantPremium\Controller\PdfDiagnosticsController;
+use Madj2k\AiAssistantPremium\Backend\Controller\PdfDiagnosticsController;
 
 return [
     'web_aiassistant_pdf_diagnostics' => [

@@ -19,12 +19,12 @@ final class PdfPageTextExtractorTest extends TestCase
             $positionedText[] = [[1, 0, 0, 1, 350, $y], 'Right column sentence ' . $row, 'F1', '10'];
         }
 
-        $page = $this->createStub(Page::class);
-        $page->method('getText')->willReturn('native interleaved text');
-        $page->method('getDataTm')->willReturn($positionedText);
+        $pdfPage = $this->createStub(Page::class);
+        $pdfPage->method('getText')->willReturn('native interleaved text');
+        $pdfPage->method('getDataTm')->willReturn($positionedText);
         $subject = new PdfPageTextExtractor(new PdfPageLayoutAnalyzer());
 
-        $result = $subject->extract($page);
+        $result = $subject->extract($pdfPage);
 
         self::assertSame('positioned', $result->strategy);
         self::assertSame('columns', $result->layoutType);
@@ -33,14 +33,14 @@ final class PdfPageTextExtractorTest extends TestCase
 
     public function testKeepsNativeTextForPlainPages(): void
     {
-        $page = $this->createStub(Page::class);
-        $page->method('getText')->willReturn('Native paragraph');
-        $page->method('getDataTm')->willReturn([
+        $pdfPage = $this->createStub(Page::class);
+        $pdfPage->method('getText')->willReturn('Native paragraph');
+        $pdfPage->method('getDataTm')->willReturn([
             [[1, 0, 0, 1, 20, 500], 'Positioned paragraph', 'F1', '10'],
         ]);
         $subject = new PdfPageTextExtractor(new PdfPageLayoutAnalyzer());
 
-        $result = $subject->extract($page);
+        $result = $subject->extract($pdfPage);
 
         self::assertSame('native', $result->strategy);
         self::assertSame('Native paragraph', $result->text);
@@ -48,9 +48,9 @@ final class PdfPageTextExtractorTest extends TestCase
 
     public function testUsesPositionedOrderForRepeatedOpticallyAlignedLabels(): void
     {
-        $page = $this->createStub(Page::class);
-        $page->method('getText')->willReturn('Introduction 03 Taste Solutions 04');
-        $page->method('getDataTm')->willReturn([
+        $pdfPage = $this->createStub(Page::class);
+        $pdfPage->method('getText')->willReturn('Introduction 03 Taste Solutions 04');
+        $pdfPage->method('getDataTm')->willReturn([
             [[1, 0, 0, 1, 199.58, 603.55], '03', 'F1', '20.04'],
             [[1, 0, 0, 1, 243.14, 607.03], 'Introduction', 'F2', '11.04'],
             [[1, 0, 0, 1, 199.58, 568.22], '04', 'F1', '20.04'],
@@ -58,7 +58,7 @@ final class PdfPageTextExtractorTest extends TestCase
         ]);
         $subject = new PdfPageTextExtractor(new PdfPageLayoutAnalyzer());
 
-        $result = $subject->extract($page);
+        $result = $subject->extract($pdfPage);
 
         self::assertSame('positioned-aligned', $result->strategy);
         self::assertSame("03 Introduction\n04 Taste Solutions", $result->text);
@@ -66,12 +66,12 @@ final class PdfPageTextExtractorTest extends TestCase
 
     public function testUsesFilteredPositionedTextWhenMarginArtifactsWereExcluded(): void
     {
-        $page = $this->createStub(Page::class);
-        $page->method('getText')->willReturn('2Cocoa Alternatives Native paragraph');
+        $pdfPage = $this->createStub(Page::class);
+        $pdfPage->method('getText')->willReturn('2Cocoa Alternatives Native paragraph');
         $subject = new PdfPageTextExtractor(new PdfPageLayoutAnalyzer());
 
         $result = $subject->extract(
-            $page,
+            $pdfPage,
             [[[1, 0, 0, 1, 20, 500], 'Positioned paragraph', 'F1', '10']],
             true,
         );

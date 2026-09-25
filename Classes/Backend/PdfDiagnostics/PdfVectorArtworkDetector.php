@@ -5,36 +5,60 @@ declare(strict_types=1);
  * This file is part of the TYPO3 CMS project.
  *
  * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * the terms of the GNU General Public License, version 3.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
  */
 
-namespace Madj2k\AiAssistantPremium\Indexing\Pdf;
+namespace Madj2k\AiAssistantPremium\Backend\PdfDiagnostics;
+
+use Madj2k\AiAssistantPremium\Indexing\Pdf\Geometry\PdfPositionedTextReader;
 
 /**
- * Finds sizeable vector artwork in areas that contain no extractable text.
+ * Class PdfVectorArtworkDetector
  *
- * This is intentionally a conservative diagnostic hint. It neither performs
- * OCR nor changes the text handed to the indexer.
+ * Detects sizeable vector artwork in page areas without extractable text.
+ *
+ * @phpstan-import-type PdfPositionedTextEntryList from PdfPositionedTextReader
+ *
+ * @author Maximilian Fäßler <maximilian@faesslerweb.de>
+ * @copyright Steffen Kroggel <developer@steffenkroggel.de>, Maximilian Fäßler <maximilian@faesslerweb.de>
+ * @package Madj2k\AiAssistantPremium
+ * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3
  */
 final readonly class PdfVectorArtworkDetector
 {
-    private const PAGE_MARGIN_RATIO = 0.05;
-    private const MIN_GAP_HEIGHT_RATIO = 0.14;
-    private const MIN_ARTWORK_WIDTH_RATIO = 0.18;
-    private const MIN_ARTWORK_HEIGHT_RATIO = 0.08;
-    private const MIN_PAINTED_PATHS = 14;
-    private const ARTWORK_MARGIN_RATIO = 0.075;
+    private const string LLL_PREFIX =
+        'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:';
+    private const float PAGE_MARGIN_RATIO = 0.05;
+    private const float MIN_GAP_HEIGHT_RATIO = 0.14;
+    private const float MIN_ARTWORK_WIDTH_RATIO = 0.18;
+    private const float MIN_ARTWORK_HEIGHT_RATIO = 0.08;
+    private const int MIN_PAINTED_PATHS = 14;
+    private const float ARTWORK_MARGIN_RATIO = 0.075;
 
+    /**
+     * Constructor.
+     *
+     * @param PdfPositionedTextReader $positionedTextReader Reader used to locate text-free page bands.
+     */
     public function __construct(
         private PdfPositionedTextReader $positionedTextReader = new PdfPositionedTextReader(),
     ) {
     }
 
+
     /**
-     * @param array<int, array<int, mixed>> $positionedText
-     * @param array<string, mixed> $details
-     * @return array<int, array<string, mixed>>
+     * Detects substantial painted vector paths inside text-free page bands.
+     *
+     * @param array $positionedText Positioned page text used to find empty bands.
+     * @phpstan-param PdfPositionedTextEntryList $positionedText
+     * @param array<string, mixed> $details PDF page details containing the media box.
+     * @param string $content Raw PDF page-content stream.
+     * @return array<int, array<string, mixed>> Diagnostic vector-artwork regions in PDF coordinates.
      */
     public function detect(array $positionedText, array $details, string $content): array
     {
@@ -88,8 +112,9 @@ final readonly class PdfVectorArtworkDetector
 
             $artifacts[] = [
                 'type' => 'vector-artwork',
-                'label' => 'Vektorgrafik',
-                'text' => 'Kein extrahierbarer Text; für diesen Inhalt wäre OCR erforderlich.',
+                'label' => self::LLL_PREFIX . 'artifact.vectorArtwork.label',
+                'text' => self::LLL_PREFIX . 'artifact.vectorArtwork.text',
+                'textIsTranslationKey' => true,
                 'columnCount' => 0,
                 'tableRowCount' => 0,
                 'excluded' => true,
@@ -103,9 +128,15 @@ final readonly class PdfVectorArtworkDetector
         return $artifacts;
     }
 
+
     /**
-     * @param array<int, array<int, mixed>> $positionedText
-     * @return array<int, array{yBottom: float, yTop: float}>
+     * Finds sufficiently large vertical page bands without extractable text.
+     *
+     * @param array $positionedText Positioned page text.
+     * @phpstan-param PdfPositionedTextEntryList $positionedText
+     * @param float $yOrigin Media-box Y origin.
+     * @param float $pageHeight Media-box height.
+     * @return array<int, array{yBottom: float, yTop: float}> Text-free bands in PDF coordinates.
      */
     private function findTextFreeBands(array $positionedText, float $yOrigin, float $pageHeight): array
     {
@@ -117,7 +148,7 @@ final readonly class PdfVectorArtworkDetector
             $fontSize = 10.0;
             foreach ($row['parts'] as $part) {
                 foreach ($part['atoms'] ?? [] as $atom) {
-                    $fontSize = max($fontSize, (float)($atom['verticalScale'] ?? $atom['fontSize'] ?? 10.0));
+                    $fontSize = max($fontSize, $atom['verticalScale']);
                 }
             }
             $occupied[] = [
@@ -155,7 +186,13 @@ final readonly class PdfVectorArtworkDetector
         return $bands;
     }
 
-    /** @return array<int, array{xMin: float, xMax: float, yBottom: float, yTop: float}> */
+
+    /**
+     * Parses painted path bounds from a raw PDF content stream.
+     *
+     * @param string $content Raw PDF page-content stream.
+     * @return array<int, array{xMin: float, xMax: float, yBottom: float, yTop: float}> Bounds of painted paths.
+     */
     private function collectPaintedPaths(string $content): array
     {
         // Text inside BT/ET is already covered by positioned extraction. Only
@@ -173,7 +210,7 @@ final readonly class PdfVectorArtworkDetector
         $operands = [];
         $pathPoints = [];
         $paths = [];
-        foreach ($matches[0] ?? [] as $token) {
+        foreach ($matches[0] as $token) {
             if ($token === '' || $token[0] === '%' || is_numeric($token)) {
                 if (is_numeric($token)) {
                     $operands[] = (float)$token;
@@ -244,10 +281,16 @@ final readonly class PdfVectorArtworkDetector
         return $paths;
     }
 
+
     /**
-     * @param array<int, array{0: float, 1: float}> $points
-     * @param array<int, float> $operands
-     * @param array{0: float, 1: float, 2: float, 3: float, 4: float, 5: float} $matrix
+     * Appends one transformed path point when enough numeric operands exist.
+     *
+     * @param array<int, array{0: float, 1: float}> $points Collected path points, updated in place.
+     * @param array<int, float> $operands Current PDF operator operands.
+     * @param array{0: float, 1: float, 2: float, 3: float, 4: float, 5: float} $matrix Current transformation matrix.
+     * @param int $required Minimum number of operands required.
+     * @param int $offset Operand offset of the point coordinates.
+     * @return void The point collection is modified by reference.
      */
     private function appendPoint(array &$points, array $operands, array $matrix, int $required, int $offset = 0): void
     {
@@ -258,10 +301,13 @@ final readonly class PdfVectorArtworkDetector
         $points[] = $this->transformPoint($values[$offset], $values[$offset + 1], $matrix);
     }
 
+
     /**
-     * @param array<int, float> $current
-     * @param array<int, float> $next
-     * @return array{0: float, 1: float, 2: float, 3: float, 4: float, 5: float}
+     * Composes two six-value PDF transformation matrices.
+     *
+     * @param array<int, float> $current Current transformation matrix.
+     * @param array<int, float> $next Matrix applied by the next PDF operator.
+     * @return array{0: float, 1: float, 2: float, 3: float, 4: float, 5: float} Composed matrix.
      */
     private function composeMatrices(array $current, array $next): array
     {
@@ -275,7 +321,15 @@ final readonly class PdfVectorArtworkDetector
         ];
     }
 
-    /** @param array<int, float> $matrix */
+
+    /**
+     * Applies a PDF transformation matrix to one point.
+     *
+     * @param float $x Source X coordinate.
+     * @param float $y Source Y coordinate.
+     * @param array<int, float> $matrix Six-value transformation matrix.
+     * @return array{0: float, 1: float} Transformed point.
+     */
     private function transformPoint(float $x, float $y, array $matrix): array
     {
         return [
@@ -284,9 +338,12 @@ final readonly class PdfVectorArtworkDetector
         ];
     }
 
+
     /**
-     * @param array<int, array{0: float, 1: float}> $points
-     * @return array{xMin: float, xMax: float, yBottom: float, yTop: float}|null
+     * Calculates a bounding box around collected path points.
+     *
+     * @param array<int, array{0: float, 1: float}> $points Collected path points.
+     * @return array{xMin: float, xMax: float, yBottom: float, yTop: float}|null Bounding box or null for no points.
      */
     private function boundsFromPoints(array $points): ?array
     {
@@ -298,9 +355,12 @@ final readonly class PdfVectorArtworkDetector
         return ['xMin' => min($x), 'xMax' => max($x), 'yBottom' => min($y), 'yTop' => max($y)];
     }
 
+
     /**
-     * @param array<int, array{xMin: float, xMax: float, yBottom: float, yTop: float}> $bounds
-     * @return array{xMin: float, xMax: float, yBottom: float, yTop: float}|null
+     * Combines multiple path bounds into one surrounding rectangle.
+     *
+     * @param array<int, array{xMin: float, xMax: float, yBottom: float, yTop: float}> $bounds Path bounding boxes.
+     * @return array{xMin: float, xMax: float, yBottom: float, yTop: float}|null Combined bounds or null for no input.
      */
     private function unionBounds(array $bounds): ?array
     {

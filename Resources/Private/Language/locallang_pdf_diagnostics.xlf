@@ -1,16 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xliff version="1.2">
-    <file source-language="en" datatype="plaintext" original="messages" date="2026-09-16T00:00:00Z">
+    <file source-language="en" datatype="plaintext" original="messages" date="2026-09-25T00:00:00Z">
         <body>
-            <trans-unit id="mlang_tabs_tab">
-                <source>AiPremium</source>
-            </trans-unit>
-            <trans-unit id="mlang_labels_tablabel">
-                <source>AiPremium</source>
-            </trans-unit>
-            <trans-unit id="mlang_labels_tabdescr">
-                <source>Premium tools and diagnostics for the AI Assistant.</source>
-            </trans-unit>
+            <trans-unit id="mlang_tabs_tab"><source>AiPremium</source></trans-unit>
+            <trans-unit id="mlang_labels_tablabel"><source>AiPremium</source></trans-unit>
+            <trans-unit id="mlang_labels_tabdescr"><source>Premium tools and diagnostics for the AI Assistant.</source></trans-unit>
+            <trans-unit id="header.title"><source>AiPremium</source></trans-unit>
+            <trans-unit id="header.description"><source>Premium tools and diagnostics for the AI Assistant.</source></trans-unit>
+            <trans-unit id="navigation.ariaLabel"><source>AiPremium backend module navigation</source></trans-unit>
+            <trans-unit id="navigation.pdfDiagnostics"><source>PDF diagnostics</source></trans-unit>
+            <trans-unit id="inspect.title"><source>Inspect PDF</source></trans-unit>
+            <trans-unit id="inspect.introduction"><source>Maximum file size: %d MB. Embedded text is required; this tool does not perform OCR.</source></trans-unit>
+            <trans-unit id="inspect.licenseRequired"><source>A valid Premium license is required.</source></trans-unit>
+            <trans-unit id="inspect.chunkConfiguration"><source>Qdrant chunk configuration</source></trans-unit>
+            <trans-unit id="inspect.chunkConfigurationHint"><source>The preview uses the selected file indexer's real chunk settings.</source></trans-unit>
+            <trans-unit id="inspect.pdfFile"><source>PDF file</source></trans-unit>
+            <trans-unit id="inspect.submit"><source>Inspect PDF</source></trans-unit>
+            <trans-unit id="result.summary"><source>Pages analysed: %d. No indexing operation was executed.</source></trans-unit>
+            <trans-unit id="overview.page"><source>Page</source></trans-unit>
+            <trans-unit id="overview.strategy"><source>Strategy</source></trans-unit>
+            <trans-unit id="overview.layout"><source>Layout</source></trans-unit>
+            <trans-unit id="overview.columns"><source>Columns</source></trans-unit>
+            <trans-unit id="overview.tableRows"><source>Table rows</source></trans-unit>
+            <trans-unit id="overview.confidence"><source>Confidence</source></trans-unit>
+            <trans-unit id="overview.characters"><source>Characters</source></trans-unit>
+            <trans-unit id="overview.warnings"><source>Warnings</source></trans-unit>
+            <trans-unit id="page.title"><source>Page %d</source></trans-unit>
+            <trans-unit id="warning.overlap.title"><source>Potentially hidden or overprinted text detected</source></trans-unit>
+            <trans-unit id="warning.overlap.description"><source>Different text objects occupy nearly identical coordinates. Both are present in the PDF text layer and currently remain in the extracted text.</source></trans-unit>
+            <trans-unit id="warning.overlap.details"><source>%d%% overlap at x %s, y %s</source></trans-unit>
+            <trans-unit id="granularity.ariaLabel"><source>Diagnostic detail</source></trans-unit>
+            <trans-unit id="granularity.view"><source>View:</source></trans-unit>
+            <trans-unit id="granularity.lines"><source>Lines</source></trans-unit>
+            <trans-unit id="granularity.textObjects"><source>Text objects</source></trans-unit>
+            <trans-unit id="preview.heading"><source>Analysed PDF</source></trans-unit>
+            <trans-unit id="preview.description"><source>Text coordinates and detected layout regions.</source></trans-unit>
+            <trans-unit id="preview.imageAlt"><source>Rendered preview of page %d</source></trans-unit>
+            <trans-unit id="preview.overlayAriaLabel"><source>Detected text regions</source></trans-unit>
+            <trans-unit id="preview.lineAriaLabel"><source>Line %d: %s</source></trans-unit>
+            <trans-unit id="preview.regionAriaLabel"><source>Region %d: %s</source></trans-unit>
+            <trans-unit id="preview.unavailable"><source>No page preview could be rendered. Coordinate data remains available in the extraction result.</source></trans-unit>
+            <trans-unit id="tabs.ariaLabel"><source>Diagnostic view for page %d</source></trans-unit>
+            <trans-unit id="tabs.extractedText"><source>Extracted text</source></trans-unit>
+            <trans-unit id="tabs.layoutAnalysis"><source>Layout analysis</source></trans-unit>
+            <trans-unit id="tabs.qdrantChunks"><source>Qdrant chunks</source></trans-unit>
+            <trans-unit id="extractedText.hint"><source>Normalized PDF adapter output passed to the indexer before configured chunking. Highlights correspond to coordinate regions in the PDF view.</source></trans-unit>
+            <trans-unit id="extractedText.empty"><source>No embedded text was extracted from this page.</source></trans-unit>
+            <trans-unit id="layout.hint"><source>Detected regions in reading order. Hover over an element to display its boundary in the PDF.</source></trans-unit>
+            <trans-unit id="layout.mapAriaLabel"><source>Detected page layout</source></trans-unit>
+            <trans-unit id="layout.excluded"><source>Excluded from indexing</source></trans-unit>
+            <trans-unit id="layout.columns"><source>%d column(s)</source></trans-unit>
+            <trans-unit id="layout.tableRows"><source>%d table row(s)</source></trans-unit>
+            <trans-unit id="layout.type.columns"><source>Two-column text</source></trans-unit>
+            <trans-unit id="layout.type.columnBlocks"><source>Two-column blocks</source></trans-unit>
+            <trans-unit id="layout.type.multiColumnBlocks"><source>Multi-column blocks</source></trans-unit>
+            <trans-unit id="layout.type.nestedColumns"><source>Nested two-column layout</source></trans-unit>
+            <trans-unit id="layout.type.table"><source>Table</source></trans-unit>
+            <trans-unit id="layout.type.sideBySideTables"><source>Side-by-side tables</source></trans-unit>
+            <trans-unit id="layout.type.fullWidth"><source>Full width</source></trans-unit>
+            <trans-unit id="layout.type.header"><source>Header</source></trans-unit>
+            <trans-unit id="layout.type.footer"><source>Footer</source></trans-unit>
+            <trans-unit id="artifact.vectorArtwork.label"><source>Vector artwork</source></trans-unit>
+            <trans-unit id="artifact.vectorArtwork.text"><source>No extractable text; OCR would be required for this content.</source></trans-unit>
+            <trans-unit id="chunks.hint"><source>Exact texts written to payload.text after whitespace normalization and configured chunking. Embeddings and metadata are not shown.</source></trans-unit>
+            <trans-unit id="chunks.configuration"><source>Configuration</source></trans-unit>
+            <trans-unit id="chunks.chunkSize"><source>Chunk size</source></trans-unit>
+            <trans-unit id="chunks.overlap"><source>Overlap</source></trans-unit>
+            <trans-unit id="chunks.maximum"><source>Maximum</source></trans-unit>
+            <trans-unit id="chunks.minimumCharacters"><source>Minimum characters</source></trans-unit>
+            <trans-unit id="chunks.serviceDefault"><source>service default</source></trans-unit>
+            <trans-unit id="chunks.unlimited"><source>unlimited</source></trans-unit>
+            <trans-unit id="chunks.listAriaLabel"><source>Qdrant chunks for page %d</source></trans-unit>
+            <trans-unit id="chunks.itemAriaLabel"><source>Chunk %d, characters %d to %d</source></trans-unit>
+            <trans-unit id="chunks.itemTitle"><source>Chunk %d</source></trans-unit>
+            <trans-unit id="chunks.itemMetadata"><source>characters %d–%d · payload.text · %d characters</source></trans-unit>
+            <trans-unit id="chunks.empty"><source>This page produces no Qdrant chunk with the selected configuration.</source></trans-unit>
+            <trans-unit id="error.invalidFormToken"><source>Invalid form token. Please reload the module and try again.</source></trans-unit>
+            <trans-unit id="error.licenseRequired"><source>PDF diagnostics require a valid Premium license.</source></trans-unit>
+            <trans-unit id="error.uploadMissing"><source>Please select a readable PDF file.</source></trans-unit>
+            <trans-unit id="error.uploadTooLarge"><source>The PDF exceeds the maximum upload size.</source></trans-unit>
+            <trans-unit id="error.uploadType"><source>Only PDF files can be inspected.</source></trans-unit>
+            <trans-unit id="error.uploadUnavailable"><source>The uploaded PDF is not available for inspection.</source></trans-unit>
+            <trans-unit id="error.inspectionFailed"><source>The PDF could not be inspected: %s</source></trans-unit>
+            <trans-unit id="configuration.serviceDefaultsOption"><source>Service defaults (no file indexer configured)</source></trans-unit>
+            <trans-unit id="configuration.serviceDefaults"><source>Service defaults</source></trans-unit>
         </body>
     </file>
 </xliff>

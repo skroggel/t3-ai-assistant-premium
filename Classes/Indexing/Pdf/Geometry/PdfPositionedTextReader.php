@@ -5,20 +5,77 @@ declare(strict_types=1);
  * This file is part of the TYPO3 CMS project.
  *
  * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * the terms of the GNU General Public License, version 3.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
  */
 
-namespace Madj2k\AiAssistantPremium\Indexing\Pdf;
+namespace Madj2k\AiAssistantPremium\Indexing\Pdf\Geometry;
 
 /**
- * Converts Smalot text matrices into horizontal visual rows and segments.
+ * Class PdfPositionedTextReader
+ *
+ * Converts Smalot text matrices into positioned atoms, visual rows and segments.
+ *
+ * @phpstan-type PdfTextMatrix array{
+ *     0: int|float|string,
+ *     1: int|float|string,
+ *     2: int|float|string,
+ *     3: int|float|string,
+ *     4: int|float|string,
+ *     5: int|float|string
+ * }
+ * @phpstan-type PdfPositionedTextEntry array{
+ *     0: PdfTextMatrix,
+ *     1: string,
+ *     2?: int|string,
+ *     3?: int|float|string
+ * }
+ * @phpstan-type PdfPositionedTextEntryList array<int, PdfPositionedTextEntry>
+ * @phpstan-type PdfTextAtom array{
+ *     x: float,
+ *     y: float,
+ *     fontSize: float,
+ *     horizontalScale: float,
+ *     verticalScale: float,
+ *     lineCenter: float,
+ *     fontId: string,
+ *     rawText: string,
+ *     sourceIndex: int,
+ *     text: string
+ * }
+ * @phpstan-type PdfTextAtomList array<int, PdfTextAtom>
+ * @phpstan-type PdfVisualPart array{xMin: float, xMax: float, text: string, atoms?: PdfTextAtomList}
+ * @phpstan-type PdfVisualPartList array<int, PdfVisualPart>
+ * @phpstan-type PdfVisualRow array{y: float, parts: PdfVisualPartList}
+ * @phpstan-type PdfVisualRowList array<int, PdfVisualRow>
+ * @phpstan-type PdfOpticalRow array{
+ *     y: float,
+ *     lineCenter: float,
+ *     fontSize: float,
+ *     verticalScale: float,
+ *     atoms: PdfTextAtomList
+ * }
+ * @phpstan-type PdfOpticalRowList array<int, PdfOpticalRow>
+ * @phpstan-type PdfVisualRowPartition array{left: PdfVisualPartList, right: PdfVisualPartList}
+ *
+ * @author Maximilian Fäßler <maximilian@faesslerweb.de>
+ * @copyright Steffen Kroggel <developer@steffenkroggel.de>, Maximilian Fäßler <maximilian@faesslerweb.de>
+ * @package Madj2k\AiAssistantPremium
+ * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3
  */
 final class PdfPositionedTextReader
 {
     /**
-     * @param array<int, array<int, mixed>> $positionedText
-     * @return array<int, array<string, mixed>>
+     * Converts positioned PDF entries into sorted visual rows and horizontal segments.
+     *
+     * @param array $positionedText Smalot positioned text entries.
+     * @phpstan-param PdfPositionedTextEntryList $positionedText
+     * @return array Visual rows ordered from top to bottom.
+     * @phpstan-return PdfVisualRowList
      */
     public function read(array $positionedText): array
     {
@@ -26,19 +83,21 @@ final class PdfPositionedTextReader
         return $this->createSegments($this->createRows($atoms));
     }
 
-    /** @param array<int, array<int, mixed>> $positionedText */
+
+    /**
+     * Normalizes positioned entries into sortable text atoms.
+     *
+     * @param array $positionedText Smalot positioned text entries.
+     * @phpstan-param PdfPositionedTextEntryList $positionedText
+     * @return array Normalized text atoms.
+     * @phpstan-return PdfTextAtomList
+     */
     private function createAtoms(array $positionedText): array
     {
         $atoms = [];
         $seen = [];
         foreach ($positionedText as $sourceIndex => $entry) {
-            if (!isset($entry[0], $entry[1]) || !is_array($entry[0])) {
-                continue;
-            }
             $matrix = $entry[0];
-            if (!isset($matrix[0], $matrix[1], $matrix[2], $matrix[3], $matrix[4], $matrix[5])) {
-                continue;
-            }
             if (abs((float)$matrix[1]) > abs((float)$matrix[0]) * 0.2
                 || abs((float)$matrix[2]) > abs((float)$matrix[3]) * 0.2
             ) {
@@ -86,6 +145,7 @@ final class PdfPositionedTextReader
         return $atoms;
     }
 
+
     /**
      * PDF producers encode the visible font size in two common ways: either in
      * the Tf font-size operand while the text matrix has unit scale, or as a
@@ -93,8 +153,11 @@ final class PdfPositionedTextReader
      * the matrix scale for the latter sentinel-style representation so regular
      * PDFs retain their existing measurements.
      *
-     * @param array<int, mixed> $entry
-     * @param array<int, mixed> $matrix
+     * @param array $entry Smalot positioned-text entry.
+     * @phpstan-param PdfPositionedTextEntry $entry
+     * @param array $matrix Six-element PDF text matrix.
+     * @phpstan-param PdfTextMatrix $matrix
+     * @return float Effective font size used by layout heuristics.
      */
     private function resolveEffectiveFontSize(array $entry, array $matrix): float
     {
@@ -111,13 +174,17 @@ final class PdfPositionedTextReader
         return max(1.0, $declaredFontSize);
     }
 
+
     /**
      * Returns the rendered horizontal font scale. Unlike the conservative
      * scalar used by layout heuristics, this value includes text-matrix
      * scaling and is intended for glyph-width calculations.
      *
-     * @param array<int, mixed> $entry
-     * @param array<int, mixed> $matrix
+     * @param array $entry Smalot positioned-text entry.
+     * @phpstan-param PdfPositionedTextEntry $entry
+     * @param array $matrix Six-element PDF text matrix.
+     * @phpstan-param PdfTextMatrix $matrix
+     * @return float Rendered horizontal scale.
      */
     private function resolveEffectiveHorizontalScale(array $entry, array $matrix): float
     {
@@ -126,13 +193,17 @@ final class PdfPositionedTextReader
         return max(0.01, $declaredFontSize * max(0.01, $matrixScale));
     }
 
+
     /**
      * Returns the rendered vertical font scale for diagnostic overlays. It is
      * kept separate from the conservative fontSize used by reading-order
      * heuristics so visual corrections cannot change indexed text.
      *
-     * @param array<int, mixed> $entry
-     * @param array<int, mixed> $matrix
+     * @param array $entry Smalot positioned-text entry.
+     * @phpstan-param PdfPositionedTextEntry $entry
+     * @param array $matrix Six-element PDF text matrix.
+     * @phpstan-param PdfTextMatrix $matrix
+     * @return float Rendered vertical scale.
      */
     private function resolveEffectiveVerticalScale(array $entry, array $matrix): float
     {
@@ -141,6 +212,15 @@ final class PdfPositionedTextReader
         return max(0.01, $declaredFontSize * max(0.01, $matrixScale));
     }
 
+
+    /**
+     * Groups text atoms into optical rows using baseline and font-size tolerances.
+     *
+     * @param array $atoms Sorted text atoms.
+     * @phpstan-param PdfTextAtomList $atoms
+     * @return array Optical rows ordered from top to bottom.
+     * @phpstan-return PdfOpticalRowList
+     */
     private function createRows(array $atoms): array
     {
         $rows = [];
@@ -179,6 +259,15 @@ final class PdfPositionedTextReader
         return $rows;
     }
 
+
+    /**
+     * Splits optical rows into horizontal text segments at significant gaps.
+     *
+     * @param array $rows Optical text rows.
+     * @phpstan-param PdfOpticalRowList $rows
+     * @return array Rows containing reconstructed segments.
+     * @phpstan-return PdfVisualRowList
+     */
     private function createSegments(array $rows): array
     {
         $result = [];
@@ -212,7 +301,15 @@ final class PdfPositionedTextReader
         return $result;
     }
 
-    /** @param array<int, array<string, mixed>> $atoms */
+
+    /**
+     * Reconstructs one text segment and its horizontal bounds from adjacent atoms.
+     *
+     * @param array $atoms Adjacent atoms belonging to the segment.
+     * @phpstan-param PdfTextAtomList $atoms
+     * @return array Segment text, bounds and source atoms.
+     * @phpstan-return PdfVisualPart
+     */
     public function createSegment(array $atoms): array
     {
         $text = '';

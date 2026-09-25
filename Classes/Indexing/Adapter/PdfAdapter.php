@@ -5,8 +5,7 @@ declare(strict_types=1);
  * This file is part of the TYPO3 CMS project.
  *
  * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * the terms of the GNU General Public License, version 3.
  *
  * For the full copyright and license information, please read the
  * LICENSE.txt file that was distributed with this source code.
@@ -23,39 +22,47 @@ use Madj2k\AiCore\Indexing\Adapter\AdapterInterface;
 use Madj2k\AiCore\Indexing\Adapter\MultiDocumentAdapterInterface;
 use Madj2k\AiCore\Indexing\DTO\IndexableDocument;
 use Madj2k\AiAssistantPremium\License\LicenseService;
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageExtractionResult;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\DTO\PdfExtractedPage;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\DTO\PdfPageExtractionResult;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfDocumentExtractionService;
 
 /**
- * Class PdfContentAdapter
+ * Class PdfAdapter
  *
- * Extracts text from PDF files page by page.
+ * Converts PDF files into page-specific documents for the indexing pipeline.
  *
  * @author Steffen Kroggel <developer@steffenkroggel.de>
- * @copyright Steffen Kroggel <developer@steffenkroggel.de>
+ * @copyright Steffen Kroggel <developer@steffenkroggel.de>, Maximilian Fäßler <maximilian@faesslerweb.de>
  * @package Madj2k\AiAssistantPremium
- * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
+ * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3
  */
-final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterface
+final readonly class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterface
 {
     /**
      * Registry and TypoScript path for the PDF result link behavior.
      *
      * @var string
      */
-    public const LINK_TO_MATCHED_PAGE_CONFIGURATION_KEY = 'indexing.pdf.linkToMatchedPage';
+    public const string LINK_TO_MATCHED_PAGE_CONFIGURATION_KEY = 'indexing.pdf.linkToMatchedPage';
 
-
+    /**
+     * Constructor.
+     *
+     * @param LicenseService $licenseService Premium license validator.
+     * @param PdfDocumentExtractionService $documentExtractionService Shared PDF extraction pipeline.
+     */
     public function __construct(
-        private readonly LicenseService $licenseService,
-        private readonly PdfDocumentExtractionService $documentExtractionService,
+        private LicenseService $licenseService,
+        private PdfDocumentExtractionService $documentExtractionService,
     ) {
 
     }
 
 
     /**
-     * @inheritDoc
+     * Returns the registry identifier of the PDF adapter.
+     *
+     * @return string Adapter identifier.
      */
     public function getIdentifier(): string
     {
@@ -64,7 +71,9 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
 
 
     /**
-     * @inheritDoc
+     * Returns the file extensions supported by the adapter.
+     *
+     * @return array<int, string> Supported lowercase file extensions.
      */
     public function getSupportedExtensions(): array
     {
@@ -73,7 +82,11 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
 
 
     /**
-     * @inheritDoc
+     * Determines whether the adapter may process the supplied file path.
+     *
+     * @param string $path File path to inspect.
+     * @return bool Whether the Premium license is valid and the path has a PDF extension.
+     * @throws \TYPO3\CMS\Core\Cache\Exception\NoSuchCacheException If the TYPO3 runtime cache is unavailable.
      */
     public function supports(string $path): bool
     {
@@ -83,7 +96,13 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
 
 
     /**
-     * @inheritDoc
+     * Extracts all pages as one normalized text for legacy single-document consumers.
+     *
+     * @param string $path Absolute path to the PDF file.
+     * @param \Madj2k\AiCore\DTO\DocumentMetadata $metadata Mutable source metadata.
+     * @return string Normalized text of all PDF pages or an empty string when unavailable.
+     * @throws \Madj2k\AiCore\Exception\IndexingException If the PDF cannot be parsed or extracted.
+     * @throws \TYPO3\CMS\Core\Cache\Exception\NoSuchCacheException If the TYPO3 runtime cache is unavailable.
      */
     public function extract(string $path, DocumentMetadata $metadata): string
     {
@@ -91,19 +110,25 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
             return '';
         }
 
-        $pages = $this->extractPages($path);
+        $pdfExtractedPageList = $this->extractPdfPageList($path);
         $metadata->addAdditional('parser', 'smalot/pdfparser');
-        $metadata->addAdditional('pdf_page_count', count($pages));
+        $metadata->addAdditional('pdf_page_count', count($pdfExtractedPageList));
 
         return trim(implode("\n\n", array_map(
-            static fn ($page): string => $page->normalizedText,
-            $pages
+            static fn ($pdfExtractedPage): string => $pdfExtractedPage->normalizedText,
+            $pdfExtractedPageList
         )));
     }
 
 
     /**
-     * @inheritDoc
+     * Extracts one independently indexable document per PDF page.
+     *
+     * @param string $path Absolute path to the PDF file.
+     * @param \Madj2k\AiCore\DTO\DocumentMetadata $metadata Base metadata cloned for every page.
+     * @return array<int, \Madj2k\AiCore\Indexing\DTO\IndexableDocument> Page documents in source order.
+     * @throws \Madj2k\AiCore\Exception\IndexingException If the PDF cannot be parsed or extracted.
+     * @throws \TYPO3\CMS\Core\Cache\Exception\NoSuchCacheException If the TYPO3 runtime cache is unavailable.
      */
     public function extractDocuments(string $path, DocumentMetadata $metadata): array
     {
@@ -111,15 +136,20 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
             return [];
         }
 
-        $pages = $this->extractPages($path);
-        $pageCount = count($pages);
+        $pdfExtractedPageList = $this->extractPdfPageList($path);
+        $pageCount = count($pdfExtractedPageList);
         $documents = [];
 
-        foreach ($pages as $pageIndex => $page) {
+        foreach ($pdfExtractedPageList as $pageIndex => $pdfExtractedPage) {
             $pageNumber = $pageIndex + 1;
-            $pageMetadata = $this->createPageMetadata($metadata, $pageNumber, $pageCount, $page->result);
+            $pageMetadata = $this->createPageMetadata(
+                $metadata,
+                $pageNumber,
+                $pageCount,
+                $pdfExtractedPage->result,
+            );
             $documents[] = new IndexableDocument(
-                $page->normalizedText,
+                $pdfExtractedPage->normalizedText,
                 $pageMetadata
             );
         }
@@ -132,10 +162,10 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
      * Extracts raw text from the individual PDF pages.
      *
      * @param string $path PDF file path.
-     * @return array<int, \Madj2k\AiAssistantPremium\Indexing\Pdf\PdfExtractedPage> Page texts in source order.
-     * @throws \Madj2k\AiCore\Exception\IndexingException
+     * @return array<int, PdfExtractedPage> Page texts in source order.
+     * @throws \Madj2k\AiCore\Exception\IndexingException If parsing or extraction of the PDF fails.
      */
-    private function extractPages(string $path): array
+    private function extractPdfPageList(string $path): array
     {
         try {
             return $this->documentExtractionService->extract($path);
@@ -155,7 +185,7 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
      * @param \Madj2k\AiCore\DTO\DocumentMetadata $metadata Base PDF metadata.
      * @param int $pageNumber One-based page number.
      * @param int $pageCount Total number of PDF pages.
-     * @param \Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPageExtractionResult $result Extraction diagnostics.
+     * @param PdfPageExtractionResult $result Extraction diagnostics.
      * @return \Madj2k\AiCore\DTO\DocumentMetadata Page metadata.
      */
     private function createPageMetadata(
@@ -202,8 +232,14 @@ final class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterfac
      */
     private function shouldLinkToMatchedPage(): bool
     {
+        try {
+            $configuredValue = Config::get(self::LINK_TO_MATCHED_PAGE_CONFIGURATION_KEY, false);
+        } catch (\Madj2k\AiCore\Exception\AppException) {
+            return false;
+        }
+
         return in_array(
-            Config::get(self::LINK_TO_MATCHED_PAGE_CONFIGURATION_KEY, false),
+            $configuredValue,
             [true, 1, '1'],
             true
         );

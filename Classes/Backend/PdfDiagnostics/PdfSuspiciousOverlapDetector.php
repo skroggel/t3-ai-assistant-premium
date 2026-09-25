@@ -5,39 +5,47 @@ declare(strict_types=1);
  * This file is part of the TYPO3 CMS project.
  *
  * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * the terms of the GNU General Public License, version 3.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
  */
 
-namespace Madj2k\AiAssistantPremium\Indexing\Pdf;
+namespace Madj2k\AiAssistantPremium\Backend\PdfDiagnostics;
+
+use Madj2k\AiAssistantPremium\Indexing\Pdf\Geometry\PdfPositionedTextReader;
 
 /**
- * Finds differing text objects painted at nearly identical coordinates.
+ * Class PdfSuspiciousOverlapDetector
  *
- * This is deliberately diagnostic only: overlap can indicate hidden template
- * text, overprinting or intentional visual effects and is not safe to remove
- * automatically during indexing.
+ * Detects potentially suspicious text objects painted at nearly identical coordinates.
+ *
+ * @phpstan-import-type PdfPositionedTextEntryList from PdfPositionedTextReader
+ *
+ * @author Maximilian Fäßler <maximilian@faesslerweb.de>
+ * @copyright Steffen Kroggel <developer@steffenkroggel.de>, Maximilian Fäßler <maximilian@faesslerweb.de>
+ * @package Madj2k\AiAssistantPremium
+ * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3
  */
 final readonly class PdfSuspiciousOverlapDetector
 {
-    private const MAX_WARNINGS = 10;
+    private const int MAX_WARNINGS = 10;
 
     /**
-     * @param array<int, array<int, mixed>> $positionedText
-     * @param array<int, bool> $textRunContinuations
-     * @return array<int, array{firstText: string, secondText: string, x: float, y: float, overlap: float}>
+     * Detects different text objects occupying nearly identical page coordinates.
+     *
+     * @param array $positionedText Smalot positioned text entries.
+     * @phpstan-param PdfPositionedTextEntryList $positionedText
+     * @param array<int, bool> $textRunContinuations Entries known to continue the same PDF text run.
+     * @return array<int, array{firstText: string, secondText: string, x: float, y: float, overlap: float}> Suspicious overlaps for backend display.
      */
     public function detect(array $positionedText, array $textRunContinuations = []): array
     {
         $objects = [];
         foreach ($positionedText as $sourceIndex => $entry) {
-            if (!isset($entry[0], $entry[1]) || !is_array($entry[0])) {
-                continue;
-            }
             $matrix = $entry[0];
-            if (!isset($matrix[0], $matrix[1], $matrix[2], $matrix[3], $matrix[4], $matrix[5])) {
-                continue;
-            }
             if (abs((float)$matrix[1]) > abs((float)$matrix[0]) * 0.2
                 || abs((float)$matrix[2]) > abs((float)$matrix[3]) * 0.2
             ) {
@@ -66,6 +74,9 @@ final readonly class PdfSuspiciousOverlapDetector
         }
 
         $warnings = [];
+
+        // Adjacent objects from one PDF text run may overlap intentionally;
+        // only independent objects sharing a baseline and origin are suspicious.
         for ($leftIndex = 0, $count = count($objects); $leftIndex < $count; $leftIndex++) {
             $left = $objects[$leftIndex];
             for ($rightIndex = $leftIndex + 1; $rightIndex < $count; $rightIndex++) {
@@ -115,7 +126,15 @@ final readonly class PdfSuspiciousOverlapDetector
         return $warnings;
     }
 
-    /** @param array<int, bool> $continuations */
+
+    /**
+     * Determines whether two overlapping objects belong to one continuous text run.
+     *
+     * @param int $firstIndex Source index of the first text object.
+     * @param int $secondIndex Source index of the second text object.
+     * @param array<int, bool> $continuations Continuation flags keyed by source index.
+     * @return bool Whether the apparent overlap is an intentional run continuation.
+     */
     private function belongsToSameContinuousTextRun(
         int $firstIndex,
         int $secondIndex,

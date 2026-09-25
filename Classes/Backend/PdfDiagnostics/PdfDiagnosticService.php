@@ -5,48 +5,90 @@ declare(strict_types=1);
  * This file is part of the TYPO3 CMS project.
  *
  * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * the terms of the GNU General Public License, version 3.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
  */
 
-namespace Madj2k\AiAssistantPremium\Indexing\Pdf;
+namespace Madj2k\AiAssistantPremium\Backend\PdfDiagnostics;
 
 use Madj2k\AiAssistantPremium\Indexing\Adapter\PdfTextNormalizer;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\DTO\PdfMarginArtifact;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfDocumentExtractionService;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\Geometry\PdfPositionedTextReader;
 use Smalot\PdfParser\Element\ElementArray;
 use Smalot\PdfParser\Font;
 use Smalot\PdfParser\PDFObject;
 
 /**
- * Inspects a PDF without indexing or persisting it.
+ * Class PdfDiagnosticService
+ *
+ * Builds a read-only diagnostic representation of PDF extraction and layout analysis.
+ *
+ * @phpstan-import-type PdfPositionedTextEntryList from PdfPositionedTextReader
+ * @phpstan-import-type PdfDiagnosticTextRegionList from PdfTextRegionMatcher
+ *
+ * @author Maximilian Fäßler <maximilian@faesslerweb.de>
+ * @copyright Steffen Kroggel <developer@steffenkroggel.de>, Maximilian Fäßler <maximilian@faesslerweb.de>
+ * @package Madj2k\AiAssistantPremium
+ * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3
  */
 final readonly class PdfDiagnosticService
 {
-    private const MAX_PREVIEW_PAGES = 20;
+    private const string LLL_PREFIX =
+        'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:';
 
+    private const int MAX_PREVIEW_PAGES = 20;
+
+    /**
+     * Constructor.
+     *
+     * @param PdfDocumentExtractionService $documentExtractionService Shared production PDF extraction pipeline.
+     * @param PdfTextNormalizer $textNormalizer Normalizer used by the indexing adapter.
+     * @param PdfPositionedTextReader $positionedTextReader Reader for visual PDF text rows.
+     * @param PdfTextRegionMatcher $textRegionMatcher Matcher for visual regions and normalized text.
+     * @param PdfSuspiciousOverlapDetector $overlapDetector Detector for suspicious overlapping text objects.
+     * @param PdfLayoutDiagnosticsProvider $layoutDiagnosticsProvider Provider using the production layout components.
+     * @param PdfVectorArtworkDetector $vectorArtworkDetector Detector for non-text vector artwork regions.
+     */
     public function __construct(
         private PdfDocumentExtractionService $documentExtractionService,
         private PdfTextNormalizer $textNormalizer,
         private PdfPositionedTextReader $positionedTextReader,
+        private PdfTextRegionMatcher $textRegionMatcher,
         private PdfSuspiciousOverlapDetector $overlapDetector,
-        private PdfPageLayoutAnalyzer $layoutAnalyzer,
+        private PdfLayoutDiagnosticsProvider $layoutDiagnosticsProvider,
         private PdfVectorArtworkDetector $vectorArtworkDetector,
     ) {
     }
 
+
     /**
-     * @return array{filename: string, pageCount: int, pages: array<int, array<string, mixed>>}
+     * Builds the complete read-only backend diagnostic model for one PDF file.
+     *
+     * @param string $path Absolute path to the uploaded PDF file.
+     * @param string $filename Original filename displayed in the backend module.
+     * @return array{filename: string, pageCount: int, pages: array<int, array<string, mixed>>} Document diagnostics based on the production extraction result.
+     * @throws \Smalot\PdfParser\Exception\MissingCatalogException If the parsed document has no page catalog.
+     * @throws \Exception If the PDF file cannot be parsed.
      */
     public function inspect(string $path, string $filename): array
     {
-        $documentPages = $this->documentExtractionService->extract($path);
-        $pages = [];
+        $pdfExtractedPageList = $this->documentExtractionService->extract($path);
+        $pdfDiagnosticPageList = [];
 
-        foreach ($documentPages as $index => $extractedPage) {
-            $page = $extractedPage->page;
+        foreach ($pdfExtractedPageList as $index => $extractedPage) {
+            $pdfPage = $extractedPage->pdfPage;
             $rawPositionedText = $extractedPage->rawPositionedText;
             $result = $extractedPage->result;
             $text = $extractedPage->normalizedText;
-            $rawTextRunContinuations = $this->detectTextRunContinuations($page->getDataCommands());
+
+            // Overlap warnings need the untouched object sequence; highlighting
+            // uses filtered objects and therefore receives remapped continuation flags.
+            $rawTextRunContinuations = $this->detectTextRunContinuations($pdfPage->getDataCommands());
             $textRunContinuations = $this->mapTextRunContinuationsToFilteredEntries(
                 $rawPositionedText,
                 $extractedPage->positionedText,
@@ -58,19 +100,37 @@ final readonly class PdfDiagnosticService
             );
             $vectorArtwork = $this->vectorArtworkDetector->detect(
                 $extractedPage->positionedText,
-                $page->getDetails(),
-                $this->readPageContent($page->get('Contents')),
+                $pdfPage->getDetails(),
+                $this->readPageContent($pdfPage->get('Contents')),
             );
             $visualization = $this->createVisualization(
                 $extractedPage->positionedText,
-                $page->getDetails(),
+                $pdfPage->getDetails(),
                 $text,
                 $index + 1,
-                [...$extractedPage->marginArtifacts, ...$vectorArtwork],
-                $page->getFonts(),
+                [
+                    ...array_map(
+                        static fn (PdfMarginArtifact $artifact): array => [
+                            'type' => $artifact->type,
+                            'label' => self::LLL_PREFIX . 'layout.type.' . $artifact->type,
+                            'text' => $artifact->text,
+                            'textIsTranslationKey' => false,
+                            'columnCount' => 0,
+                            'tableRowCount' => 0,
+                            'excluded' => true,
+                            'xMin' => $artifact->xMin,
+                            'xMax' => $artifact->xMax,
+                            'yBottom' => $artifact->yBottom,
+                            'yTop' => $artifact->yTop,
+                        ],
+                        $extractedPage->marginArtifacts,
+                    ),
+                    ...$vectorArtwork,
+                ],
+                $pdfPage->getFonts(),
                 $textRunContinuations,
             );
-            $pages[] = [
+            $pdfDiagnosticPageList[] = [
                 'number' => $index + 1,
                 'strategy' => $result->strategy,
                 'layoutType' => $result->layoutType,
@@ -96,11 +156,18 @@ final readonly class PdfDiagnosticService
 
         return [
             'filename' => $filename,
-            'pageCount' => count($pages),
-            'pages' => $pages,
+            'pageCount' => count($pdfDiagnosticPageList),
+            'pages' => $pdfDiagnosticPageList,
         ];
     }
 
+
+    /**
+     * Reads and concatenates decoded page content streams for vector diagnostics.
+     *
+     * @param mixed $contents Smalot page Contents value.
+     * @return string Decoded PDF drawing commands, or an empty string when unavailable.
+     */
     private function readPageContent(mixed $contents): string
     {
         if ($contents instanceof PDFObject) {
@@ -123,13 +190,19 @@ final readonly class PdfDiagnosticService
         return $result;
     }
 
+
     /**
-     * @param array<int, array<int, mixed>> $positionedText
-     * @param array<string, mixed> $details
-     * @param array<int, array<string, mixed>> $marginArtifacts
-     * @param array<string, Font> $fonts
-     * @param array<int, bool> $textRunContinuations
-     * @return array{annotatedText: string, annotatedLineText: string, regions: array<int, array<string, int|float|string>>, lineRegions: array<int, array<string, int|float|string>>, layoutRegions: array<int, array<string, mixed>>}
+     * Maps extracted text and detected layout geometry into interactive backend overlays.
+     *
+     * @param array $positionedText Filtered Smalot getDataTm() output.
+     * @phpstan-param PdfPositionedTextEntryList $positionedText
+     * @param array<string, mixed> $details PDF page metadata including the MediaBox.
+     * @param string $text Final normalized text produced by the extraction pipeline.
+     * @param int $pageNumber One-based page number.
+     * @param array<int, array<string, mixed>> $marginArtifacts Excluded margin and artwork regions.
+     * @param array<string, Font> $fonts Embedded fonts indexed by resource identifier.
+     * @param array<int, bool> $textRunContinuations Continuation flags aligned with filtered text objects.
+     * @return array{annotatedText: string, annotatedLineText: string, regions: array<int, array<string, int|float|string>>, lineRegions: array<int, array<string, int|float|string>>, layoutRegions: array<int, array<string, mixed>>} HTML annotations and normalized overlay regions.
      */
     private function createVisualization(
         array $positionedText,
@@ -170,7 +243,7 @@ final readonly class PdfDiagnosticService
                 // so a row-wide merged segment would no longer occur verbatim
                 // in the extracted text and could not be linked reliably.
                 foreach ($part['atoms'] ?? [] as $atom) {
-                    $atom = $visualAtoms[(int)($atom['sourceIndex'] ?? -1)] ?? $atom;
+                    $atom = $visualAtoms[$atom['sourceIndex']] ?? $atom;
                     $fontSize = (float)($atom['fontSize'] ?? 10.0);
                     $regionText = $this->textNormalizer->normalize((string)($atom['text'] ?? ''));
                     if ($regionText === '' || preg_match('/[\p{L}\p{N}]/u', $regionText) !== 1) {
@@ -215,7 +288,7 @@ final readonly class PdfDiagnosticService
             }
         }
 
-        $detectedLayoutRegions = $this->layoutAnalyzer->diagnoseRegions($positionedText);
+        $detectedLayoutRegions = $this->layoutDiagnosticsProvider->diagnose($positionedText);
         $layoutRegions = [
             ...$detectedLayoutRegions,
             ...$marginArtifacts,
@@ -240,11 +313,11 @@ final readonly class PdfDiagnosticService
             $pageNumber,
             $detectedLayoutRegions,
         );
-        $lineRegions = $this->addTextRanges($text, $lineRegions);
+        $lineRegions = $this->textRegionMatcher->addTextRanges($text, $lineRegions);
 
         return [
-            'annotatedText' => $this->annotateText($text, $regions),
-            'annotatedLineText' => $this->annotateText($text, $lineRegions),
+            'annotatedText' => $this->textRegionMatcher->annotate($text, $regions),
+            'annotatedLineText' => $this->textRegionMatcher->annotate($text, $lineRegions),
             'regions' => $regions,
             'lineRegions' => $lineRegions,
             'layoutRegions' => $this->normalizeLayoutRegions(
@@ -258,16 +331,24 @@ final readonly class PdfDiagnosticService
         ];
     }
 
+
     /**
      * Groups adjacent PDF text objects on the same optical row. A sufficiently
      * wide horizontal gap starts a separate line segment so parallel columns
      * remain independently hoverable.
      *
-     * @param array<int, array<int, mixed>> $positionedText
-     * @param array<int, array<string, mixed>> $visualAtoms
-     * @param array<string, Font> $fonts
-     * @param array<int, array<string, mixed>> $layoutRegions
-     * @return array<int, array<string, int|float|string>>
+     * @param array $positionedText Filtered Smalot getDataTm() output.
+     * @phpstan-param PdfPositionedTextEntryList $positionedText
+     * @param array<int, array<string, mixed>> $visualAtoms Text atoms with resolved visual x coordinates.
+     * @param array<string, Font> $fonts Embedded fonts indexed by resource identifier.
+     * @param float $xOrigin Left coordinate of the page MediaBox.
+     * @param float $yOrigin Bottom coordinate of the page MediaBox.
+     * @param float $pageWidth Width of the page MediaBox.
+     * @param float $pageHeight Height of the page MediaBox.
+     * @param int $pageNumber One-based page number.
+     * @param array<int, array<string, mixed>> $layoutRegions Detected layout regions in PDF coordinates.
+     * @return array Normalized hoverable line overlays.
+     * @phpstan-return PdfDiagnosticTextRegionList
      */
     private function createLineRegions(
         array $positionedText,
@@ -285,7 +366,7 @@ final readonly class PdfDiagnosticService
             $atoms = [];
             foreach ($row['parts'] as $part) {
                 foreach ($part['atoms'] ?? [] as $atom) {
-                    $atoms[] = $visualAtoms[(int)($atom['sourceIndex'] ?? -1)] ?? $atom;
+                    $atoms[] = $visualAtoms[$atom['sourceIndex']] ?? $atom;
                 }
             }
             usort($atoms, static fn (array $left, array $right): int => $left['x'] <=> $right['x']);
@@ -360,9 +441,13 @@ final readonly class PdfDiagnosticService
         return $lineRegions;
     }
 
+
     /**
-     * @param array<int, array<string, mixed>> $layoutRegions
-     * @return array<int, float>
+     * Returns all column gutters that intersect a text baseline.
+     *
+     * @param float $baseline Text baseline in PDF user space.
+     * @param array<int, array<string, mixed>> $layoutRegions Detected layout regions.
+     * @return array<int, float> Sorted gutter coordinates for the matching region.
      */
     private function columnSplitsForRow(float $baseline, array $layoutRegions): array
     {
@@ -381,7 +466,14 @@ final readonly class PdfDiagnosticService
         return [];
     }
 
-    /** @param array<int, float> $splits */
+
+    /**
+     * Resolves the zero-based visual column containing an x coordinate.
+     *
+     * @param float $x X coordinate in PDF user space.
+     * @param array<int, float> $splits Sorted gutter coordinates.
+     * @return int Zero-based column index.
+     */
     private function columnIndex(float $x, array $splits): int
     {
         $column = 0;
@@ -393,21 +485,28 @@ final readonly class PdfDiagnosticService
         return $column;
     }
 
+
     /**
      * Uses embedded PDF glyph widths where available and falls back to the
      * previous average-character estimate for incomplete or missing fonts.
      *
-     * @param array<string, mixed> $atom
-     * @param array<string, Font> $fonts
+     * @param array<string, mixed> $atom Positioned text atom.
+     * @param array<string, Font> $fonts Embedded fonts indexed by resource identifier.
+     * @return float Estimated visible glyph width in PDF user-space units.
      */
     private function calculateTextObjectWidth(array $atom, array $fonts): float
     {
         return $this->calculateTextObjectAdvance($atom, $fonts, false);
     }
 
+
     /**
-     * @param array<string, mixed> $atom
-     * @param array<string, Font> $fonts
+     * Calculates the horizontal cursor advance of a PDF text object.
+     *
+     * @param array<string, mixed> $atom Positioned text atom.
+     * @param array<string, Font> $fonts Embedded fonts indexed by resource identifier.
+     * @param bool $includeOuterWhitespace Whether leading and trailing whitespace contributes to the advance.
+     * @return float Cursor advance in PDF user-space units.
      */
     private function calculateTextObjectAdvance(
         array $atom,
@@ -440,16 +539,17 @@ final readonly class PdfDiagnosticService
         return max($fontSize * 0.25, $fontUnits / 1000.0 * $horizontalScale);
     }
 
+
     /**
      * Smalot exposes the same Tm origin for consecutive Tj/TJ operations and
      * does not apply the text cursor advance to the next item. Preserve the
      * original coordinate for explicitly repositioned or overprinted text,
      * but advance uninterrupted runs by their rendered glyph width.
      *
-     * @param array<int, array<string, mixed>> $atoms
-     * @param array<int, bool> $continuations
-     * @param array<string, Font> $fonts
-     * @return array<int, array<string, mixed>>
+     * @param array<int, array<string, mixed>> $atoms Positioned text atoms.
+     * @param array<int, bool> $continuations Continuation flags indexed by source text-object index.
+     * @param array<string, Font> $fonts Embedded fonts indexed by resource identifier.
+     * @return array<int, array<string, mixed>> Atoms indexed by source index with corrected visual positions.
      */
     private function resolveVisualAtomPositions(
         array $atoms,
@@ -482,9 +582,13 @@ final readonly class PdfDiagnosticService
         return $resolved;
     }
 
+
     /**
-     * @param array<int, array<int, mixed>> $positionedText
-     * @return array<int, array<string, mixed>>
+     * Flattens the visual row model into source-indexed text atoms.
+     *
+     * @param array $positionedText Filtered Smalot getDataTm() output.
+     * @phpstan-param PdfPositionedTextEntryList $positionedText
+     * @return array<int, array<string, mixed>> Positioned text atoms in visual row order.
      */
     private function collectAtoms(array $positionedText): array
     {
@@ -497,9 +601,12 @@ final readonly class PdfDiagnosticService
         return $atoms;
     }
 
+
     /**
-     * @param array<int, array<string, mixed>> $commands
-     * @return array<int, bool>
+     * Detects consecutive Tj/TJ operations that advance one uninterrupted PDF text run.
+     *
+     * @param array<int, array<string, mixed>> $commands Decoded PDF content-stream commands.
+     * @return array<int, bool> Continuation flags indexed by raw text-object index.
      */
     private function detectTextRunContinuations(array $commands): array
     {
@@ -524,11 +631,16 @@ final readonly class PdfDiagnosticService
         return $continuations;
     }
 
+
     /**
-     * @param array<int, array<int, mixed>> $rawEntries
-     * @param array<int, array<int, mixed>> $filteredEntries
-     * @param array<int, bool> $rawContinuations
-     * @return array<int, bool>
+     * Reindexes raw text-run continuation flags after margin objects have been removed.
+     *
+     * @param array $rawEntries Unfiltered positioned text entries.
+     * @phpstan-param PdfPositionedTextEntryList $rawEntries
+     * @param array $filteredEntries Positioned text entries retained for indexing.
+     * @phpstan-param PdfPositionedTextEntryList $filteredEntries
+     * @param array<int, bool> $rawContinuations Continuation flags for raw entries.
+     * @return array<int, bool> Continuation flags indexed by filtered-entry position.
      */
     private function mapTextRunContinuationsToFilteredEntries(
         array $rawEntries,
@@ -554,9 +666,17 @@ final readonly class PdfDiagnosticService
         return $mapped;
     }
 
+
     /**
-     * @param array<int, array<string, mixed>> $regions
-     * @return array<int, array<string, mixed>>
+     * Converts PDF-space layout bounds into percentage-based preview overlays.
+     *
+     * @param array<int, array<string, mixed>> $regions Layout regions in PDF user space.
+     * @param float $xOrigin Left coordinate of the page MediaBox.
+     * @param float $yOrigin Bottom coordinate of the page MediaBox.
+     * @param float $pageWidth Width of the page MediaBox.
+     * @param float $pageHeight Height of the page MediaBox.
+     * @param int $pageNumber One-based page number.
+     * @return array<int, array<string, mixed>> Regions enriched with percentage bounds and UI identifiers.
      */
     private function normalizeLayoutRegions(
         array $regions,
@@ -601,244 +721,37 @@ final readonly class PdfDiagnosticService
         }, $regions);
     }
 
+
+    /**
+     * Converts an absolute coordinate into a clamped percentage.
+     *
+     * @param float $value Coordinate or extent to convert.
+     * @param float $total Reference dimension, expected to be greater than zero.
+     * @return float Value clamped to the inclusive range from 0 to 100.
+     */
     private function percentage(float $value, float $total): float
     {
         return max(0.0, min(100.0, $value / $total * 100.0));
     }
 
-    /**
-     * @param array<int, array<string, int|float|string>> $regions
-     */
-    private function annotateText(string $text, array $regions): string
-    {
-        $matches = $this->matchRegions($text, $regions);
-
-        $html = '';
-        $cursor = 0;
-        foreach ($matches as $match) {
-            if ($match['offset'] < $cursor) {
-                continue;
-            }
-            $html .= htmlspecialchars(
-                substr($text, $cursor, $match['offset'] - $cursor),
-                ENT_QUOTES | ENT_SUBSTITUTE,
-                'UTF-8',
-            );
-            $region = $match['region'];
-            $matchedText = substr($text, $match['offset'], $match['length']);
-            $html .= sprintf(
-                '<mark class="aiassistant-pdf-diagnostics__text-region" data-region-id="%s" tabindex="0" style="--region-hue:%d">%s</mark>',
-                htmlspecialchars((string)$region['id'], ENT_QUOTES, 'UTF-8'),
-                (int)$region['hue'],
-                htmlspecialchars($matchedText, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
-            );
-            $cursor = $match['offset'] + $match['length'];
-        }
-        $html .= htmlspecialchars(substr($text, $cursor), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-
-        return $html;
-    }
 
     /**
-     * @param array<int, array<string, int|float|string>> $regions
-     * @return array<int, array{offset: int, length: int, region: array<string, int|float|string>}>
-     */
-    private function matchRegions(string $text, array $regions): array
-    {
-        $matches = [];
-        $occupied = [];
-        usort($regions, static fn (array $left, array $right): int =>
-            strlen((string)$right['text']) <=> strlen((string)$left['text'])
-        );
-        foreach ($regions as $region) {
-            $candidates = [];
-            foreach ($this->matchingNeedles((string)$region['text']) as $needle) {
-                foreach ($this->findOccurrences($text, $needle) as $offset) {
-                    $length = strlen($needle);
-                    if ($this->overlapsMatch($offset, $length, $occupied)) {
-                        continue;
-                    }
-                    $candidates[] = [
-                        'offset' => $offset,
-                        'length' => $length,
-                    ];
-                }
-            }
-            if ($candidates === []) {
-                continue;
-            }
-
-            $selected = $this->selectContextualOccurrence($region, $candidates, $matches);
-            $matches[] = [...$selected, 'region' => $region];
-            $occupied[] = $selected;
-        }
-        usort($matches, static fn (array $left, array $right): int =>
-            $left['offset'] <=> $right['offset'] ?: $right['length'] <=> $left['length']
-        );
-        return $matches;
-    }
-
-    /**
-     * @param array<int, array<string, int|float|string>> $regions
-     * @return array<int, array<string, int|float|string>>
-     */
-    private function addTextRanges(string $text, array $regions): array
-    {
-        $ranges = [];
-        foreach ($this->matchRegions($text, $regions) as $match) {
-            $prefix = substr($text, 0, $match['offset']);
-            $matchedText = substr($text, $match['offset'], $match['length']);
-            $start = mb_strlen($prefix);
-            $ranges[(string)$match['region']['id']] = [
-                'textStart' => $start,
-                'textEnd' => $start + mb_strlen($matchedText),
-            ];
-        }
-
-        return array_map(
-            static fn (array $region): array => [
-                ...$region,
-                ...($ranges[(string)$region['id']] ?? []),
-            ],
-            $regions,
-        );
-    }
-
-    /**
-     * Chooses the occurrence that lies between already linked neighbours on
-     * the same visual PDF row. Text columns are rearranged before display, so
-     * identical words cannot be linked reliably by taking their first unused
-     * textual occurrence. Longer neighbouring objects are processed first and
-     * provide stable left/right context for short repeated words.
+     * Renders one PDF page as a PNG data URI for the backend preview.
      *
-     * @param array<string, int|float|string> $region
-     * @param array<int, array{offset: int, length: int}> $candidates
-     * @param array<int, array{offset: int, length: int, region: array<string, int|float|string>}> $matches
-     * @return array{offset: int, length: int}
+     * Rendering failures are intentionally absorbed because the textual
+     * diagnostics remain useful without an image preview.
+     *
+     * @param string $path Absolute path to the PDF file.
+     * @param int $pageIndex Zero-based page index.
+     * @return string|null PNG data URI, or null when Imagick is unavailable or rendering fails.
      */
-    private function selectContextualOccurrence(array $region, array $candidates, array $matches): array
-    {
-        if (count($candidates) === 1 || $matches === []) {
-            return $candidates[0];
-        }
-
-        $leftNeighbour = null;
-        $rightNeighbour = null;
-        $regionLeft = (float)($region['left'] ?? 0.0);
-        $regionTop = (float)($region['top'] ?? 0.0);
-        $regionHeight = max(0.1, (float)($region['height'] ?? 0.0));
-
-        foreach ($matches as $match) {
-            $neighbour = $match['region'];
-            $neighbourTop = (float)($neighbour['top'] ?? 0.0);
-            $neighbourHeight = max(0.1, (float)($neighbour['height'] ?? 0.0));
-            $sameVisualRow = abs($regionTop - $neighbourTop)
-                <= max(0.25, min($regionHeight, $neighbourHeight) * 0.8);
-            if (!$sameVisualRow) {
-                continue;
-            }
-
-            $neighbourLeft = (float)($neighbour['left'] ?? 0.0);
-            if ($neighbourLeft < $regionLeft
-                && ($leftNeighbour === null
-                    || $neighbourLeft > (float)$leftNeighbour['region']['left'])
-            ) {
-                $leftNeighbour = $match;
-            } elseif ($neighbourLeft > $regionLeft
-                && ($rightNeighbour === null
-                    || $neighbourLeft < (float)$rightNeighbour['region']['left'])
-            ) {
-                $rightNeighbour = $match;
-            }
-        }
-
-        $lowerBound = $leftNeighbour === null
-            ? null
-            : $leftNeighbour['offset'] + $leftNeighbour['length'];
-        $upperBound = $rightNeighbour['offset'] ?? null;
-        $bounded = array_values(array_filter(
-            $candidates,
-            static fn (array $candidate): bool => ($lowerBound === null || $candidate['offset'] >= $lowerBound)
-                && ($upperBound === null || $candidate['offset'] + $candidate['length'] <= $upperBound),
-        ));
-        if ($bounded === []) {
-            return $candidates[0];
-        }
-
-        usort($bounded, static function (array $left, array $right) use ($lowerBound, $upperBound): int {
-            $score = static function (array $candidate) use ($lowerBound, $upperBound): int {
-                $distance = 0;
-                if ($lowerBound !== null) {
-                    $distance += $candidate['offset'] - $lowerBound;
-                }
-                if ($upperBound !== null) {
-                    $distance += $upperBound - ($candidate['offset'] + $candidate['length']);
-                }
-                return $distance;
-            };
-            return $score($left) <=> $score($right) ?: $left['offset'] <=> $right['offset'];
-        });
-
-        return $bounded[0];
-    }
-
-    /** @return array<int, string> */
-    private function matchingNeedles(string $text): array
-    {
-        $needles = [$text];
-        $withoutLineHyphen = preg_replace('/-[ \t]*$/u', '', $text) ?? $text;
-        if ($withoutLineHyphen !== '' && $withoutLineHyphen !== $text) {
-            $needles[] = $withoutLineHyphen;
-        }
-        return $needles;
-    }
-
-    /** @return array<int, int> */
-    private function findOccurrences(string $text, string $needle): array
-    {
-        if ($needle === '') {
-            return [];
-        }
-        if (mb_strlen($needle) <= 2) {
-            preg_match_all(
-                '/(?<![\p{L}\p{N}])' . preg_quote($needle, '/') . '(?![\p{L}\p{N}])/u',
-                $text,
-                $matches,
-                PREG_OFFSET_CAPTURE,
-            );
-            return array_map(static fn (array $match): int => $match[1], $matches[0] ?? []);
-        }
-
-        $offsets = [];
-        $offset = 0;
-        while (($match = strpos($text, $needle, $offset)) !== false) {
-            $offsets[] = $match;
-            $offset = $match + max(1, strlen($needle));
-        }
-        return $offsets;
-    }
-
-    /**
-     * @param array<int, array{offset: int, length: int}> $matches
-     */
-    private function overlapsMatch(int $offset, int $length, array $matches): bool
-    {
-        foreach ($matches as $match) {
-            if ($offset < $match['offset'] + $match['length']
-                && $offset + $length > $match['offset']
-            ) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private function renderPreview(string $path, int $pageIndex): ?string
     {
         if (!class_exists(\Imagick::class)) {
             return null;
         }
 
+        $image = null;
         try {
             $image = new \Imagick();
             $image->setResolution(110, 110);
@@ -848,13 +761,11 @@ final readonly class PdfDiagnosticService
             $image->setImageFormat('png');
             $image->thumbnailImage(1000, 0);
             $image->stripImage();
-            $dataUri = 'data:image/png;base64,' . base64_encode($image->getImageBlob());
-            $image->clear();
-            $image->destroy();
-
-            return $dataUri;
+            return 'data:image/png;base64,' . base64_encode($image->getImageBlob());
         } catch (\Throwable) {
             return null;
+        } finally {
+            $image?->clear();
         }
     }
 }

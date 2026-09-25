@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Madj2k\AiAssistantPremium\Tests\Unit\Indexing\Pdf;
+namespace Madj2k\AiAssistantPremium\Tests\Unit\Indexing\Pdf\Geometry;
 
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPositionedTextReader;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\Geometry\PdfPositionedTextReader;
 use PHPUnit\Framework\TestCase;
 
 final class PdfPositionedTextReaderTest extends TestCase

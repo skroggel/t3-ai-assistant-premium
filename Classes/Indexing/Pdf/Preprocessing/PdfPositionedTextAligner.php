@@ -5,24 +5,40 @@ declare(strict_types=1);
  * This file is part of the TYPO3 CMS project.
  *
  * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * the terms of the GNU General Public License, version 3.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
  */
 
-namespace Madj2k\AiAssistantPremium\Indexing\Pdf;
+namespace Madj2k\AiAssistantPremium\Indexing\Pdf\Preprocessing;
+
+use Madj2k\AiAssistantPremium\Indexing\Pdf\Geometry\PdfPositionedTextReader;
 
 /**
- * Aligns Smalot's calculated text matrices with the native PDF show-text
- * operators. Some PDFs contain empty runs that make getDataTm() associate the
- * following decoded strings with the preceding matrices. The command stream
- * retains the correct one-to-one order in those documents.
+ * Class PdfPositionedTextAligner
+ *
+ * Aligns Smalot text matrices with the corresponding native PDF text operators.
+ *
+ * @phpstan-import-type PdfPositionedTextEntryList from PdfPositionedTextReader
+ *
+ * @author Maximilian Fäßler <maximilian@faesslerweb.de>
+ * @copyright Steffen Kroggel <developer@steffenkroggel.de>, Maximilian Fäßler <maximilian@faesslerweb.de>
+ * @package Madj2k\AiAssistantPremium
+ * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3
  */
 final readonly class PdfPositionedTextAligner
 {
     /**
-     * @param array<int, array<int, mixed>> $positionedText
-     * @param array<int, array<string, mixed>> $commands
-     * @return array<int, array<int, mixed>>
+     * Aligns decoded positioned text with native PDF show-text commands when structurally safe.
+     *
+     * @param array $positionedText Smalot positioned text entries.
+     * @phpstan-param PdfPositionedTextEntryList $positionedText
+     * @param array<int, array<string, mixed>> $commands Native PDF data commands.
+     * @return array Aligned entries or the unchanged input when alignment is unsafe.
+     * @phpstan-return PdfPositionedTextEntryList
      */
     public function align(array $positionedText, array $commands): array
     {
@@ -42,16 +58,13 @@ final readonly class PdfPositionedTextAligner
         }
 
         foreach ($positionedText as $index => &$entry) {
-            if (!isset($entry[0]) || !is_array($entry[0])) {
-                return $positionedText;
-            }
             // Text commands may still contain bytes in a font-specific
             // encoding. getDataTm() has already decoded those through the PDF
             // font map, so retain that value rather than introducing Unicode
             // replacement characters into extraction and diagnostics.
             if ($this->isUsableCommandText(
                 $commandTexts[$index],
-                (string)($entry[1] ?? ''),
+                $entry[1],
             )) {
                 $entry[1] = $commandTexts[$index];
             }
@@ -61,6 +74,14 @@ final readonly class PdfPositionedTextAligner
         return $positionedText;
     }
 
+
+    /**
+     * Determines whether command-stream text is safer than Smalot's decoded value.
+     *
+     * @param string $commandText Text recovered from the native show-text command.
+     * @param string $decodedText Text decoded by Smalot using the PDF font map.
+     * @return bool Whether the command text may replace the decoded value.
+     */
     private function isUsableCommandText(string $commandText, string $decodedText): bool
     {
         if (!mb_check_encoding($commandText, 'UTF-8')) {
@@ -96,6 +117,13 @@ final readonly class PdfPositionedTextAligner
         return true;
     }
 
+
+    /**
+     * Recursively extracts shown text from a PDF text-command operand.
+     *
+     * @param mixed $operand Scalar or nested command operand.
+     * @return string Concatenated shown text.
+     */
     private function extractShownText(mixed $operand): string
     {
         if (is_string($operand)) {

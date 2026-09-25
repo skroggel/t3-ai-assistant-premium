@@ -20,21 +20,23 @@ use Madj2k\AiAssistant\Backend\Configuration\BackendRegistryFieldContributorInte
 use Madj2k\AiAssistantPremium\Indexing\Adapter\PdfAdapter;
 
 /**
- * PdfRegistryFieldContributor
+ * Class PdfRegistryFieldContributor
  *
  * Contributes PDF settings to the central backend configuration.
  *
  * @author Maximilian Fäßler <maximilian@faesslerweb.de>
- * @copyright Steffen Kroggel <developer@steffenkroggel.de>
+ * @copyright Steffen Kroggel <developer@steffenkroggel.de>, Maximilian Fäßler <maximilian@faesslerweb.de>
  * @package Madj2k\AiAssistantPremium
- * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
+ * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3
  */
 final class PdfRegistryFieldContributor implements BackendRegistryFieldContributorInterface
 {
-    private const LLL_PREFIX = 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_be.xlf:';
+    private const string LLL_PREFIX = 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_be.xlf:';
 
     /**
-     * @inheritDoc
+     * Returns the PDF-specific fields shown in the central backend configuration.
+     *
+     * @return array<int, array<string, mixed>> Registry-field definitions.
      */
     public function getFields(): array
     {

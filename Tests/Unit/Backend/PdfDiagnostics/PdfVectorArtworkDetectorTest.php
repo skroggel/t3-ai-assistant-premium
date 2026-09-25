@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Madj2k\AiAssistantPremium\Tests\Unit\Indexing\Pdf;
+namespace Madj2k\AiAssistantPremium\Tests\Unit\Backend\PdfDiagnostics;
 
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfPositionedTextReader;
-use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfVectorArtworkDetector;
+use Madj2k\AiAssistantPremium\Backend\PdfDiagnostics\PdfVectorArtworkDetector;
+use Madj2k\AiAssistantPremium\Indexing\Pdf\Geometry\PdfPositionedTextReader;
 use PHPUnit\Framework\TestCase;
 
 final class PdfVectorArtworkDetectorTest extends TestCase
@@ -31,7 +31,10 @@ final class PdfVectorArtworkDetectorTest extends TestCase
 
         self::assertCount(1, $result);
         self::assertSame('vector-artwork', $result[0]['type']);
-        self::assertSame('Vektorgrafik', $result[0]['label']);
+        self::assertSame(
+            'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:artifact.vectorArtwork.label',
+            $result[0]['label'],
+        );
         self::assertTrue($result[0]['excluded']);
     }
 
