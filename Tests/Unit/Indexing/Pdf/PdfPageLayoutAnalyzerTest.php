@@ -579,6 +579,68 @@ final class PdfPageLayoutAnalyzerTest extends TestCase
         );
     }
 
+
+    public function testReadsCompactThreeColumnProseInsideOuterColumn(): void
+    {
+        $subject = new PdfPageLayoutAnalyzer();
+        $data = [];
+        for ($row = 0; $row < 5; $row++) {
+            $y = 520.0 - $row * 14;
+            $data[] = $this->entry(20, $y, 'Outer left content line ' . ($row + 1), 7);
+            $data[] = $this->entry(320, $y, 'First nested prose line ' . ($row + 1), 7);
+            $data[] = $this->entry(410, $y, 'Second nested prose line ' . ($row + 1), 7);
+            $data[] = $this->entry(500, $y, 'Third nested prose line ' . ($row + 1), 7);
+        }
+
+        $analysis = $subject->analyze($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
+
+        self::assertSame('nested-columns', $regions[0]['type']);
+        self::assertSame(3, $regions[0]['columnCount']);
+        self::assertSame(3, $analysis->columnCount);
+        self::assertCount(3, $regions[0]['columnSplits']);
+        self::assertLessThan(
+            strpos($analysis->text, 'Second nested prose line 1'),
+            strpos($analysis->text, 'First nested prose line 5'),
+        );
+        self::assertLessThan(
+            strpos($analysis->text, 'Third nested prose line 1'),
+            strpos($analysis->text, 'Second nested prose line 5'),
+        );
+    }
+
+
+    public function testReadsCompactThreeColumnRegionRelativeToItsOwnWidth(): void
+    {
+        $subject = new PdfPageLayoutAnalyzer();
+        $data = [$this->entry(630, 570, 'Compact section heading', 12)];
+        for ($row = 0; $row < 5; $row++) {
+            $y = 540.0 - $row * 14;
+            $data[] = $this->entry(630, $y, 'First compact prose line ' . ($row + 1), 7);
+            $data[] = $this->entry(805, $y, 'Second compact prose line ' . ($row + 1), 7);
+            $data[] = $this->entry(980, $y, 'Third compact prose line ' . ($row + 1), 7);
+        }
+        for ($row = 0; $row < 5; $row++) {
+            $y = 380.0 - $row * 14;
+            $data[] = $this->entry(36, $y, 'Lower left page content line ' . ($row + 1), 7);
+            $data[] = $this->entry(650, $y, 'Lower right page content line ' . ($row + 1), 7);
+        }
+
+        $analysis = $subject->analyze($data);
+        $regions = (new PdfLayoutDiagnosticsProvider())->diagnose($data);
+
+        self::assertSame('multi-column-blocks', $regions[0]['type']);
+        self::assertSame(3, $regions[0]['columnCount']);
+        self::assertLessThan(
+            strpos($analysis->text, 'Second compact prose line 1'),
+            strpos($analysis->text, 'First compact prose line 5'),
+        );
+        self::assertLessThan(
+            strpos($analysis->text, 'Third compact prose line 1'),
+            strpos($analysis->text, 'Second compact prose line 5'),
+        );
+    }
+
     public function testDeduplicatesOverprintedGlyphRuns(): void
     {
         $subject = new PdfPageLayoutAnalyzer();

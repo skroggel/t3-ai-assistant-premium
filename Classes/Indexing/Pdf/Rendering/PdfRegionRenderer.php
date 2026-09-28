@@ -94,13 +94,17 @@ final readonly class PdfRegionRenderer
             }
 
             if ($classification['isColumnRegion']) {
-                $blocks[] = $classification['hasNestedColumns'] && $depth < 2
-                    ? $this->renderNestedColumnRegion($region, $split, $depth)
-                    : $this->layoutRenderer->renderColumnRegion(
+                if ($classification['hasNestedColumns'] && $depth < 2) {
+                    $nestedResult = $this->renderNestedColumnRegion($region, $split, $depth);
+                    $blocks[] = $nestedResult['text'];
+                    $maxColumnCount = max($maxColumnCount, $nestedResult['maxColumnCount']);
+                } else {
+                    $blocks[] = $this->layoutRenderer->renderColumnRegion(
                         $region,
                         $split,
                         $classification['hasIndependentTables'],
-                );
+                    );
+                }
                 $hasColumns = true;
                 $hasTables = $hasTables || $classification['hasIndependentTables'];
                 $tableRowCount += $classification['hasIndependentTables']
@@ -139,31 +143,46 @@ final readonly class PdfRegionRenderer
      * @phpstan-param PdfVisualRowList $rows
      * @param float $split X coordinate of the outer gutter.
      * @param int $depth Current recursive nesting depth.
-     * @return string Text rendered in nested column reading order.
+     * @return array{text: string, maxColumnCount: int} Rendered text and deepest local column count.
      */
-    private function renderNestedColumnRegion(array $rows, float $split, int $depth): string
+    private function renderNestedColumnRegion(array $rows, float $split, int $depth): array
     {
         $sides = $this->nestedLayoutAnalyzer->partitionAtSplit($rows, $split);
         $blocks = [];
+        $maxColumnCount = 2;
         foreach ([$sides['left'], $sides['right']] as $sideRows) {
             if ($sideRows === []) {
+                continue;
+            }
+            $multiColumns = $this->nestedLayoutAnalyzer->detectLocalMultiColumns($sideRows);
+            if ($multiColumns['count'] > 2) {
+                $maxColumnCount = max($maxColumnCount, $multiColumns['count']);
+                $blocks[] = $this->layoutRenderer->renderMultiColumnRegion(
+                    $sideRows,
+                    $multiColumns['splits'],
+                );
                 continue;
             }
             $sideWidth = max(1.0, $this->columnDetector->maximumX($sideRows) - $this->columnDetector->minimumX($sideRows));
             $sideColumns = $this->columnDetector->detectNestedColumns($sideRows, $sideWidth);
             if ($sideColumns['count'] > 1) {
-                $blocks[] = $this->render(
+                $nestedResult = $this->render(
                     $sideRows,
                     $sideColumns['split'],
                     $sideWidth,
                     $depth + 1,
-                )['text'];
+                );
+                $blocks[] = $nestedResult['text'];
+                $maxColumnCount = max($maxColumnCount, $nestedResult['maxColumnCount']);
                 continue;
             }
             $blocks[] = $this->layoutRenderer->renderRows($sideRows);
         }
 
-        return implode("\n\n", array_filter($blocks));
+        return [
+            'text' => implode("\n\n", array_filter($blocks)),
+            'maxColumnCount' => $maxColumnCount,
+        ];
     }
 
 

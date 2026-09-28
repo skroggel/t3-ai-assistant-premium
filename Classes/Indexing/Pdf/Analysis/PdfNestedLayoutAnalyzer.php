@@ -40,11 +40,13 @@ final readonly class PdfNestedLayoutAnalyzer
      * @param PdfVisualRowPartitioner $visualRowPartitioner Partitioner for rows crossing an outer gutter.
      * @param PdfColumnDetector $columnDetector Detector for inner column gutters.
      * @param PdfRegionSegmenter $regionSegmenter Segmenter for repeated inner layout bands.
+     * @param PdfMultiColumnDetector $multiColumnDetector Detector for three-column layouts within an outer side.
      */
     public function __construct(
         private PdfVisualRowPartitioner $visualRowPartitioner = new PdfVisualRowPartitioner(),
         private PdfColumnDetector $columnDetector = new PdfColumnDetector(),
         private PdfRegionSegmenter $regionSegmenter = new PdfRegionSegmenter(),
+        private PdfMultiColumnDetector $multiColumnDetector = new PdfMultiColumnDetector(),
     ) {
     }
 
@@ -63,6 +65,11 @@ final readonly class PdfNestedLayoutAnalyzer
     {
         $splits = [$outerSplit];
         foreach ($this->partitionAtSplit($rows, $outerSplit) as $sideRows) {
+            $multiColumns = $this->detectLocalMultiColumns($sideRows);
+            if ($multiColumns['count'] > 2) {
+                array_push($splits, ...$multiColumns['splits']);
+                continue;
+            }
             if (count($sideRows) < self::MIN_COLUMN_LINES * 2) {
                 continue;
             }
@@ -91,6 +98,9 @@ final readonly class PdfNestedLayoutAnalyzer
     public function hasNestedLayout(array $rows, float $split): bool
     {
         foreach ($this->partitionAtSplit($rows, $split) as $sideRows) {
+            if ($this->detectLocalMultiColumns($sideRows)['count'] > 2) {
+                return true;
+            }
             if (count($sideRows) < self::MIN_COLUMN_LINES * 2) {
                 continue;
             }
@@ -103,6 +113,53 @@ final readonly class PdfNestedLayoutAnalyzer
             }
         }
         return false;
+    }
+
+
+    /**
+     * Detects three or more columns relative to the occupied width of one
+     * outer side. Page-wide thresholds would otherwise hide compact nested
+     * brochure copy even though its local column anchors are stable.
+     *
+     * @param array $rows Rows on one side of an outer gutter.
+     * @phpstan-param PdfVisualRowList $rows
+     * @return array{count: int, splits: array<int, float>} Local column count and gutter coordinates.
+     */
+    public function detectLocalMultiColumns(array $rows): array
+    {
+        if ($rows === []) {
+            return ['count' => 1, 'splits' => []];
+        }
+
+        $localWidth = max(
+            1.0,
+            $this->columnDetector->maximumX($rows) - $this->columnDetector->minimumX($rows),
+        );
+
+        return $this->multiColumnDetector->detect($rows, $localWidth);
+    }
+
+
+    /**
+     * Returns the highest local column count found inside either side of an
+     * outer column layout.
+     *
+     * @param array $rows Rows in the outer column region.
+     * @phpstan-param PdfVisualRowList $rows
+     * @param float $outerSplit X coordinate of the outer column gutter.
+     * @return int Maximum nested column count.
+     */
+    public function maximumNestedColumnCount(array $rows, float $outerSplit): int
+    {
+        $maximumColumnCount = 1;
+        foreach ($this->partitionAtSplit($rows, $outerSplit) as $sideRows) {
+            $maximumColumnCount = max(
+                $maximumColumnCount,
+                $this->detectLocalMultiColumns($sideRows)['count'],
+            );
+        }
+
+        return $maximumColumnCount;
     }
 
 

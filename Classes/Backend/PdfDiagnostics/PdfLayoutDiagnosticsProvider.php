@@ -94,6 +94,12 @@ final readonly class PdfLayoutDiagnosticsProvider
             );
             $bounds = $this->regionBounds($region);
             $number = count($result) + 1;
+            $columnCount = $classification['hasNestedColumns']
+                ? max(
+                    $classification['columnCount'],
+                    $this->nestedLayoutAnalyzer->maximumNestedColumnCount($region, $split),
+                )
+                : $classification['columnCount'];
             $result[] = [
                 'number' => $number,
                 'type' => $classification['type'],
@@ -106,7 +112,7 @@ final readonly class PdfLayoutDiagnosticsProvider
                     'side-by-side-tables' => self::LLL_PREFIX . 'layout.type.sideBySideTables',
                     default => self::LLL_PREFIX . 'layout.type.fullWidth',
                 },
-                'columnCount' => $classification['columnCount'],
+                'columnCount' => $columnCount,
                 'columnSplits' => $classification['columnCount'] > 2
                     ? $classification['columnSplits']
                     : ($classification['hasNestedColumns']

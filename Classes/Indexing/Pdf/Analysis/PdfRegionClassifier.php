@@ -77,8 +77,12 @@ final readonly class PdfRegionClassifier
         bool $allowColumns,
     ): array {
         $table = $this->tableDetector->detect($region, $pageWidth);
+        $regionWidth = max(
+            1.0,
+            $this->columnDetector->maximumX($region) - $this->columnDetector->minimumX($region),
+        );
         $multiColumns = $allowColumns
-            ? $this->multiColumnDetector->detect($region, $pageWidth)
+            ? $this->multiColumnDetector->detect($region, $regionWidth)
             : ['count' => 1, 'splits' => []];
         $columnStats = $this->regionSegmenter->columnStats($region, $split);
         $hasIndependentTables = $allowColumns && $this->tableDetector->hasIndependentSideTables($region, $split);
