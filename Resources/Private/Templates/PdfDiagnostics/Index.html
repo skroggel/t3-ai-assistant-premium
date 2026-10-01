@@ -1,0 +1,429 @@
+<div class="aiassistant-config">
+    <f:render partial="Backend/Module/Header" arguments="{_all}" />
+    <f:render partial="Backend/Module/Navigation" arguments="{_all}" />
+
+    <div class="aiassistant-config__card">
+        <h2><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:inspect.title" /></h2>
+        <p class="aiassistant-config__intro">
+            <f:translate
+                key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:inspect.introduction"
+                arguments="{0: maximumUploadMegabytes}"
+            />
+        </p>
+
+        <f:if condition="{diagnosticError}">
+            <div class="aiassistant-config__notice aiassistant-config__notice--error">{diagnosticError}</div>
+        </f:if>
+        <f:if condition="!{licenseValid}">
+            <div class="aiassistant-config__notice aiassistant-config__notice--warning">
+                <f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:inspect.licenseRequired" />
+            </div>
+        </f:if>
+
+        <form method="post" enctype="multipart/form-data" class="aiassistant-pdf-diagnostics__form">
+            <input type="hidden" name="formToken" value="{formToken}" />
+            <div class="aiassistant-pdf-diagnostics__chunk-config">
+                <label for="pdf-diagnostics-indexer">
+                    <strong><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:inspect.chunkConfiguration" /></strong>
+                </label>
+                <select id="pdf-diagnostics-indexer" name="indexerConfigUid">
+                    <f:for each="{chunkingConfigurationOptions}" as="configuration">
+                        <f:if condition="{configuration.uid} == {selectedChunkingConfigurationUid}">
+                            <f:then><option value="{configuration.uid}" selected="selected">{configuration.label}</option></f:then>
+                            <f:else><option value="{configuration.uid}">{configuration.label}</option></f:else>
+                        </f:if>
+                    </f:for>
+                </select>
+                <small><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:inspect.chunkConfigurationHint" /></small>
+            </div>
+            <label for="pdf-diagnostics-file">
+                <strong><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:inspect.pdfFile" /></strong>
+            </label>
+            <div class="aiassistant-pdf-diagnostics__form-controls">
+                <input
+                    id="pdf-diagnostics-file"
+                    class="aiassistant-pdf-diagnostics__file-input"
+                    type="file"
+                    name="pdfFile"
+                    accept="application/pdf,.pdf"
+                    required="required"
+                />
+                <f:if condition="{licenseValid}">
+                    <f:then>
+                        <button class="aiassistant-config__button" type="submit">
+                            <f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:inspect.submit" />
+                        </button>
+                    </f:then>
+                    <f:else>
+                        <button class="aiassistant-config__button" type="button" disabled="disabled">
+                            <f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:inspect.submit" />
+                        </button>
+                    </f:else>
+                </f:if>
+            </div>
+        </form>
+    </div>
+
+    <f:if condition="{diagnosticResult}">
+        <div class="aiassistant-config__card">
+            <h2>{diagnosticResult.filename}</h2>
+            <p class="aiassistant-config__intro">
+                <f:translate
+                    key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:result.summary"
+                    arguments="{0: diagnosticResult.pageCount}"
+                />
+            </p>
+
+            <div class="aiassistant-config__table-wrap">
+                <table class="aiassistant-config__table aiassistant-pdf-diagnostics__overview-table">
+                    <thead>
+                        <tr>
+                            <th><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:overview.page" /></th>
+                            <th><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:overview.strategy" /></th>
+                            <th><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:overview.layout" /></th>
+                            <th><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:overview.columns" /></th>
+                            <th><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:overview.tableRows" /></th>
+                            <th><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:overview.confidence" /></th>
+                            <th><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:overview.characters" /></th>
+                            <th><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:overview.warnings" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <f:for each="{diagnosticResult.pages}" as="page">
+                            <tr>
+                                <td><strong>{page.number}</strong></td>
+                                <td><code class="aiassistant-config__key">{page.strategy}</code></td>
+                                <td><span class="aiassistant-config__badge aiassistant-config__badge--{f:if(condition: page.empty, then: 'warn', else: 'ok')}">{page.layoutType}</span></td>
+                                <td>{page.columnCount}</td>
+                                <td>{page.tableRowCount}</td>
+                                <td>{page.confidence}%</td>
+                                <td>{page.characterCount}</td>
+                                <td>
+                                    <f:if condition="{page.warningCount}">
+                                        <f:then><span class="aiassistant-config__badge aiassistant-config__badge--warn">{page.warningCount}</span></f:then>
+                                        <f:else><span class="aiassistant-config__badge aiassistant-config__badge--ok">0</span></f:else>
+                                    </f:if>
+                                </td>
+                            </tr>
+                        </f:for>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="aiassistant-pdf-diagnostics__pages">
+                <f:for each="{diagnosticResult.pages}" as="page">
+                    <section class="aiassistant-pdf-diagnostics__page">
+                        <h3 class="aiassistant-pdf-diagnostics__page-title">
+                            <f:translate
+                                key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:page.title"
+                                arguments="{0: page.number}"
+                            />
+                        </h3>
+
+                        <f:if condition="{page.warnings}">
+                            <div class="aiassistant-pdf-diagnostics__overlap-warning">
+                                <strong><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:warning.overlap.title" /></strong>
+                                <p>
+                                    <f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:warning.overlap.description" />
+                                </p>
+                                <ul>
+                                    <f:for each="{page.warnings}" as="warning">
+                                        <li>
+                                            “{warning.firstText}” ↔ “{warning.secondText}”
+                                            <small>(<f:translate
+                                                key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:warning.overlap.details"
+                                                arguments="{0: warning.overlap, 1: warning.x, 2: warning.y}"
+                                            />)</small>
+                                        </li>
+                                    </f:for>
+                                </ul>
+                            </div>
+                        </f:if>
+
+                        <div
+                            class="aiassistant-pdf-diagnostics__granularity"
+                            role="group"
+                            aria-label="{f:translate(key: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:granularity.ariaLabel')}"
+                            data-pdf-diagnostics-granularity
+                        >
+                            <span><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:granularity.view" /></span>
+                            <button type="button" class="is-active" data-pdf-diagnostics-granularity-option="lines" aria-pressed="true"><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:granularity.lines" /></button>
+                            <button type="button" data-pdf-diagnostics-granularity-option="objects" aria-pressed="false"><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:granularity.textObjects" /></button>
+                        </div>
+
+                        <div class="aiassistant-pdf-diagnostics__page-layout">
+                            <div class="aiassistant-pdf-diagnostics__preview-column">
+                                <div class="aiassistant-pdf-diagnostics__column-heading">
+                                    <h4><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:preview.heading" /></h4>
+                                    <span><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:preview.description" /></span>
+                                </div>
+
+                                <f:if condition="{page.previewDataUri}">
+                                    <f:then>
+                                        <div class="aiassistant-pdf-diagnostics__preview">
+                                            <img
+                                                src="{page.previewDataUri}"
+                                                alt="{f:translate(key: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:preview.imageAlt', arguments: {0: page.number})}"
+                                            />
+                                            <div
+                                                class="aiassistant-pdf-diagnostics__overlay"
+                                                aria-label="{f:translate(key: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:preview.overlayAriaLabel')}"
+                                            >
+                                                <f:for each="{page.layoutRegions}" as="layoutRegion">
+                                                    <div
+                                                        class="aiassistant-pdf-diagnostics__layout-region"
+                                                        data-layout-region-id="{layoutRegion.id}"
+                                                        data-pdf-diagnostics-layer="layout"
+                                                        hidden="hidden"
+                                                        style="--layout-hue:{layoutRegion.hue};left:{layoutRegion.left}%;top:{layoutRegion.top}%;width:{layoutRegion.width}%;height:{layoutRegion.height}%"
+                                                    ></div>
+                                                </f:for>
+                                                <f:for each="{page.lineRegions}" as="region">
+                                                    <button
+                                                        type="button"
+                                                        class="aiassistant-pdf-diagnostics__region aiassistant-pdf-diagnostics__region--line"
+                                                        data-region-id="{region.id}"
+                                                        data-pdf-diagnostics-layer="lines"
+                                                        title="{f:translate(key: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:preview.lineAriaLabel', arguments: {0: region.number, 1: region.text})}"
+                                                        aria-label="{f:translate(key: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:preview.lineAriaLabel', arguments: {0: region.number, 1: region.text})}"
+                                                        style="--region-hue:{region.hue};left:{region.left}%;top:{region.top}%;width:{region.width}%;height:{region.height}%"
+                                                    ><span>{region.number}</span></button>
+                                                </f:for>
+                                                <f:for each="{page.regions}" as="region">
+                                                    <button
+                                                        type="button"
+                                                        class="aiassistant-pdf-diagnostics__region"
+                                                        data-region-id="{region.id}"
+                                                        data-pdf-diagnostics-layer="objects"
+                                                        hidden="hidden"
+                                                        title="{f:translate(key: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:preview.regionAriaLabel', arguments: {0: region.number, 1: region.text})}"
+                                                        aria-label="{f:translate(key: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:preview.regionAriaLabel', arguments: {0: region.number, 1: region.text})}"
+                                                        style="--region-hue:{region.hue};left:{region.left}%;top:{region.top}%;width:{region.width}%;height:{region.height}%"
+                                                    ><span>{region.number}</span></button>
+                                                </f:for>
+                                            </div>
+                                        </div>
+                                    </f:then>
+                                    <f:else>
+                                        <div class="aiassistant-config__notice aiassistant-config__notice--warning">
+                                            <f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:preview.unavailable" />
+                                        </div>
+                                    </f:else>
+                                </f:if>
+                            </div>
+
+                            <div class="aiassistant-pdf-diagnostics__workspace" data-pdf-diagnostics-tabs>
+                                <div
+                                    class="aiassistant-pdf-diagnostics__viewer-tabs"
+                                    role="tablist"
+                                    aria-label="{f:translate(key: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:tabs.ariaLabel', arguments: {0: page.number})}"
+                                >
+                                    <button
+                                        id="pdf-diagnostics-page-{page.number}-text-tab"
+                                        type="button"
+                                        class="aiassistant-pdf-diagnostics__viewer-tab is-active"
+                                        role="tab"
+                                        aria-selected="true"
+                                        aria-controls="pdf-diagnostics-page-{page.number}-text-panel"
+                                        data-pdf-diagnostics-tab="text"
+                                    ><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:tabs.extractedText" /></button>
+                                    <button
+                                        id="pdf-diagnostics-page-{page.number}-layout-tab"
+                                        type="button"
+                                        class="aiassistant-pdf-diagnostics__viewer-tab"
+                                        role="tab"
+                                        aria-selected="false"
+                                        aria-controls="pdf-diagnostics-page-{page.number}-layout-panel"
+                                        tabindex="-1"
+                                        data-pdf-diagnostics-tab="layout"
+                                    ><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:tabs.layoutAnalysis" /></button>
+                                    <button
+                                        id="pdf-diagnostics-page-{page.number}-chunks-tab"
+                                        type="button"
+                                        class="aiassistant-pdf-diagnostics__viewer-tab"
+                                        role="tab"
+                                        aria-selected="false"
+                                        aria-controls="pdf-diagnostics-page-{page.number}-chunks-panel"
+                                        tabindex="-1"
+                                        data-pdf-diagnostics-tab="chunks"
+                                    ><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:tabs.qdrantChunks" /></button>
+                                </div>
+
+                                <div
+                                    id="pdf-diagnostics-page-{page.number}-text-panel"
+                                    class="aiassistant-pdf-diagnostics__viewer-panel aiassistant-pdf-diagnostics__text"
+                                    role="tabpanel"
+                                    aria-labelledby="pdf-diagnostics-page-{page.number}-text-tab"
+                                    data-pdf-diagnostics-panel="text"
+                                >
+                                    <p class="aiassistant-pdf-diagnostics__viewer-hint">
+                                        <f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:extractedText.hint" />
+                                    </p>
+                                    <f:if condition="{page.empty}">
+                                        <f:then>
+                                            <div class="aiassistant-config__notice aiassistant-config__notice--warning">
+                                                <f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:extractedText.empty" />
+                                            </div>
+                                        </f:then>
+                                        <f:else>
+                                            <pre class="aiassistant-config__code-block" data-pdf-diagnostics-text-layer="lines"><f:format.raw>{page.annotatedLineText}</f:format.raw></pre>
+                                            <pre class="aiassistant-config__code-block" data-pdf-diagnostics-text-layer="objects" hidden="hidden"><f:format.raw>{page.annotatedText}</f:format.raw></pre>
+                                        </f:else>
+                                    </f:if>
+                                </div>
+
+                                <div
+                                    id="pdf-diagnostics-page-{page.number}-layout-panel"
+                                    class="aiassistant-pdf-diagnostics__viewer-panel"
+                                    role="tabpanel"
+                                    aria-labelledby="pdf-diagnostics-page-{page.number}-layout-tab"
+                                    data-pdf-diagnostics-panel="layout"
+                                    hidden="hidden"
+                                >
+                                    <p class="aiassistant-pdf-diagnostics__viewer-hint">
+                                        <f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:layout.hint" />
+                                    </p>
+                                    <div
+                                        class="aiassistant-pdf-diagnostics__layout-map"
+                                        aria-label="{f:translate(key: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:layout.mapAriaLabel')}"
+                                    >
+                                        <f:for each="{page.layoutRegions}" as="layoutRegion">
+                                            <button
+                                                type="button"
+                                                class="aiassistant-pdf-diagnostics__layout-map-item aiassistant-pdf-diagnostics__layout-map-item--{layoutRegion.type}"
+                                                data-layout-region-id="{layoutRegion.id}"
+                                                style="--layout-hue:{layoutRegion.hue}"
+                                            >
+                                                <span class="aiassistant-pdf-diagnostics__layout-map-number">{layoutRegion.number}</span>
+                                                <span class="aiassistant-pdf-diagnostics__layout-map-shape" aria-hidden="true"><i></i><i></i><i></i></span>
+                                                <span class="aiassistant-pdf-diagnostics__layout-map-label">
+                                                    <strong><f:translate key="{layoutRegion.label}" /></strong>
+                                                    <f:if condition="{layoutRegion.excluded}">
+                                                        <f:then>
+                                                            <small class="aiassistant-pdf-diagnostics__excluded-label">
+                                                                <f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:layout.excluded" />
+                                                            </small>
+                                                            <small>
+                                                                <f:if condition="{layoutRegion.textIsTranslationKey}">
+                                                                    <f:then><f:translate key="{layoutRegion.text}" /></f:then>
+                                                                    <f:else>{layoutRegion.text}</f:else>
+                                                                </f:if>
+                                                            </small>
+                                                        </f:then>
+                                                        <f:else>
+                                                            <small>
+                                                                <f:translate
+                                                                    key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:layout.columns"
+                                                                    arguments="{0: layoutRegion.columnCount}"
+                                                                /><f:if condition="{layoutRegion.tableRowCount}"> · <f:translate
+                                                                    key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:layout.tableRows"
+                                                                    arguments="{0: layoutRegion.tableRowCount}"
+                                                                /></f:if>
+                                                            </small>
+                                                        </f:else>
+                                                    </f:if>
+                                                </span>
+                                            </button>
+                                        </f:for>
+                                    </div>
+                                </div>
+
+                                <div
+                                    id="pdf-diagnostics-page-{page.number}-chunks-panel"
+                                    class="aiassistant-pdf-diagnostics__viewer-panel"
+                                    role="tabpanel"
+                                    aria-labelledby="pdf-diagnostics-page-{page.number}-chunks-tab"
+                                    data-pdf-diagnostics-panel="chunks"
+                                    hidden="hidden"
+                                >
+                                    <p class="aiassistant-pdf-diagnostics__viewer-hint">
+                                        <f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.hint" />
+                                    </p>
+                                    <dl class="aiassistant-pdf-diagnostics__chunk-settings">
+                                        <div>
+                                            <dt><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.configuration" /></dt>
+                                            <dd>{diagnosticResult.chunking.title} (#{diagnosticResult.chunking.uid})</dd>
+                                        </div>
+                                        <div>
+                                            <dt><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.chunkSize" /></dt>
+                                            <dd>
+                                                <f:if condition="{diagnosticResult.chunking.chunkSize} > 0">
+                                                    <f:then>{diagnosticResult.chunking.chunkSize}</f:then>
+                                                    <f:else><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.serviceDefault" /></f:else>
+                                                </f:if>
+                                            </dd>
+                                        </div>
+                                        <div>
+                                            <dt><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.overlap" /></dt>
+                                            <dd>
+                                                <f:if condition="{diagnosticResult.chunking.chunkOverlap} > 0">
+                                                    <f:then>{diagnosticResult.chunking.chunkOverlap}</f:then>
+                                                    <f:else><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.serviceDefault" /></f:else>
+                                                </f:if>
+                                            </dd>
+                                        </div>
+                                        <div>
+                                            <dt><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.maximum" /></dt>
+                                            <dd>
+                                                <f:if condition="{diagnosticResult.chunking.maxChunks} > 0">
+                                                    <f:then>{diagnosticResult.chunking.maxChunks}</f:then>
+                                                    <f:else><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.unlimited" /></f:else>
+                                                </f:if>
+                                            </dd>
+                                        </div>
+                                        <div>
+                                            <dt><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.minimumCharacters" /></dt>
+                                            <dd>
+                                                <f:if condition="{diagnosticResult.chunking.minChunkChars} > 0">
+                                                    <f:then>{diagnosticResult.chunking.minChunkChars}</f:then>
+                                                    <f:else><f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.serviceDefault" /></f:else>
+                                                </f:if>
+                                            </dd>
+                                        </div>
+                                    </dl>
+                                    <f:if condition="{page.chunks}">
+                                        <f:then>
+                                            <div
+                                                class="aiassistant-pdf-diagnostics__chunks"
+                                                aria-label="{f:translate(key: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.listAriaLabel', arguments: {0: page.number})}"
+                                            >
+                                                <f:for each="{page.chunks}" as="chunk">
+                                                    <article
+                                                        class="aiassistant-pdf-diagnostics__chunk"
+                                                        tabindex="0"
+                                                        role="button"
+                                                        aria-pressed="false"
+                                                        data-pdf-diagnostics-chunk
+                                                        data-region-ids="{chunk.regionIds}"
+                                                        aria-label="{f:translate(key: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.itemAriaLabel', arguments: {0: chunk.number, 1: chunk.startDisplay, 2: chunk.endDisplay})}"
+                                                    >
+                                                        <header>
+                                                            <strong><f:translate
+                                                                key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.itemTitle"
+                                                                arguments="{0: chunk.number}"
+                                                            /></strong>
+                                                            <span><f:translate
+                                                                key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.itemMetadata"
+                                                                arguments="{0: chunk.startDisplay, 1: chunk.endDisplay, 2: chunk.characterCount}"
+                                                            /></span>
+                                                        </header>
+                                                        <pre>{chunk.text}</pre>
+                                                    </article>
+                                                </f:for>
+                                            </div>
+                                        </f:then>
+                                        <f:else>
+                                            <div class="aiassistant-config__notice aiassistant-config__notice--warning">
+                                                <f:translate key="LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_pdf_diagnostics.xlf:chunks.empty" />
+                                            </div>
+                                        </f:else>
+                                    </f:if>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </f:for>
+            </div>
+        </div>
+    </f:if>
+</div>
