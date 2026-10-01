@@ -104,20 +104,20 @@ final readonly class PdfAdapter implements AdapterInterface, MultiDocumentAdapte
      * @throws \Madj2k\AiCore\Exception\IndexingException If the PDF cannot be parsed or extracted.
      * @throws \TYPO3\CMS\Core\Cache\Exception\NoSuchCacheException If the TYPO3 runtime cache is unavailable.
      */
-    public function extract(string $path, DocumentMetadata $metadata): string
+    public function extract(string $path, DocumentMetadata $metadata): ?IndexableDocument
     {
         if (!$this->licenseService->isValid() || !is_file($path)) {
-            return '';
+            return null;
         }
 
         $pdfExtractedPageList = $this->extractPdfPageList($path);
         $metadata->addAdditional('parser', 'smalot/pdfparser');
         $metadata->addAdditional('pdf_page_count', count($pdfExtractedPageList));
 
-        return trim(implode("\n\n", array_map(
+        return new IndexableDocument(trim(implode("\n\n", array_map(
             static fn ($pdfExtractedPage): string => $pdfExtractedPage->normalizedText,
             $pdfExtractedPageList
-        )));
+        ))), $metadata);
     }
 
 

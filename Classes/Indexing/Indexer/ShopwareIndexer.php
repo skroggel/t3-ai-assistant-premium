@@ -388,6 +388,7 @@ final class ShopwareIndexer extends AbstractIndexer implements IndexerInterface
     {
         $metadata = new DocumentMetadata($source->getSourceType(), $source->getSourceId());
         $metadata->setLanguage($source->getLanguage());
+        $metadata->setLanguageId($source->getLanguageId());
         $document = new IndexableDocument('', $metadata);
 
         $hashes = [$this->sourceStateService->createSourceHash($document)];
