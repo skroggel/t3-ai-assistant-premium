@@ -10,19 +10,19 @@ defined('TYPO3') or die('Access denied.');
 (static function (): void {
     ExtensionUtility::configurePlugin(
         'AiAssistantPremium',
-        'KeSearch',
+        'Search',
         [
-            SearchController::class => 'index',
+            SearchController::class => 'index,normalize',
         ],
         [
-            SearchController::class => 'index',
+            SearchController::class => 'index,normalize',
         ],
         ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
     );
 
     ExtensionUtility::configurePlugin(
         'AiAssistantPremium',
-        'KeSearchSummary',
+        'SearchSummary',
         [
             SearchController::class => 'searchSummary',
         ],

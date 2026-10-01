@@ -20,6 +20,8 @@ use Madj2k\AiAssistant\Assistant\Domain\Repository\AssistantProfileRepository;
 use Madj2k\AiAssistant\Controller\AbstractController;
 use Madj2k\AiAssistantPremium\Search\Middleware\SearchQueryMiddleware;
 use Madj2k\AiAssistantPremium\License\LicenseService;
+use Madj2k\AiAssistantPremium\Search\Result\SearchResultPayloadBuilder;
+use TYPO3\CMS\Core\Http\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -40,6 +42,7 @@ final class SearchController extends AbstractController
     public function __construct(
         AssistantProfileRepository $assistantProfileRepository,
         private readonly LicenseService $licenseService,
+        private readonly SearchResultPayloadBuilder $payloadBuilder,
     ) {
         parent::__construct($assistantProfileRepository);
     }
@@ -79,6 +82,56 @@ final class SearchController extends AbstractController
         ]);
 
         return $this->htmlResponse();
+    }
+
+    /**
+     * Normalizes search rows for non-Fluid clients such as Vue.
+     *
+     * @param string $payload JSON encoded result rows.
+     * @param string $fields JSON encoded field mapping.
+     * @param int $total Total result count.
+     * @param int $page Current result page.
+     * @param string $integration Search integration identifier.
+     * @param string $chatIdentifier Stable chat identifier.
+     * @param string $originalQuery Original query.
+     * @param string $effectiveQuery Effective query.
+     * @return ResponseInterface JSON response.
+     * @throws \TYPO3\CMS\Core\Cache\Exception\NoSuchCacheException
+     */
+    public function normalizeAction(
+        string $payload = '[]',
+        string $fields = '{}',
+        int $total = 0,
+        int $page = 1,
+        string $integration = 'ke_search',
+        string $chatIdentifier = '',
+        string $originalQuery = '',
+        string $effectiveQuery = '',
+    ): ResponseInterface {
+
+        if (!$this->licenseService->isValid()) {
+            return new JsonResponse([]);
+        }
+
+        $rows = json_decode($payload, true);
+        $fieldMapping = json_decode($fields, true);
+        if (!is_array($rows) || !is_array($fieldMapping)) {
+            return new JsonResponse(['error' => 'Invalid search payload.'], 400);
+        }
+
+        return new JsonResponse($this->payloadBuilder->buildFromControl(
+            rows: $rows,
+            fields: array_map('strval', $fieldMapping),
+            total: $total,
+            page: $page,
+            control: [
+                'processed' => 1,
+                'integration' => $integration,
+                'chatIdentifier' => $chatIdentifier,
+                'originalQuery' => $originalQuery,
+                'effectiveQuery' => $effectiveQuery,
+            ],
+        ));
     }
 
     /**

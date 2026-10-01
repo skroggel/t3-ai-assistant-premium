@@ -38,6 +38,76 @@ The default ``ke_search`` form selector is:
 For a Solr integration, the middleware expects the native ``tx_solr[q]`` query
 parameter. Projects must provide the result-template mapping for Solr.
 
+Vue and JSON search clients
+---------------------------
+
+Non-native clients do not need to use ``AiAssistantSearchEnhancer.js``. They can
+send the same control parameters directly with the regular search request:
+
+..  code-block:: text
+
+    tx_aiassistantpremium_search[integration]=ke_search
+    tx_aiassistantpremium_search[optimizerProfile]=123
+    tx_aiassistantpremium_search[chatIdentifier]=search-abc
+    tx_aiassistantpremium_search[response]=json
+
+With ``response=json`` the middleware does not redirect. It returns:
+
+..  code-block:: json
+
+    {
+        "originalQuery": "original search term",
+        "effectiveQuery": "optimized search term",
+        "optimized": true,
+        "integration": "ke_search",
+        "chatIdentifier": "search-abc",
+        "state": "..."
+    }
+
+The Vue client can use ``effectiveQuery`` for the subsequent native ke_search
+JSON request. Without ``response=json`` the existing native form/redirect flow
+remains unchanged.
+
+Result normalization for Vue
+----------------------------
+
+Vue clients can reuse the server-side result normalization through the Premium
+``SearchController::normalizeAction`` action. Send the rows and their field
+mapping as JSON form parameters:
+
+..  code-block:: javascript
+
+    const formData = new FormData();
+    formData.set('payload', JSON.stringify(resultRows));
+    formData.set('fields', JSON.stringify({
+        id: 'number',
+        title: 'title_text',
+        text: 'teaser',
+        url: 'url',
+        type: 'type',
+        score: 'score'
+    }));
+    formData.set('total', String(total));
+    formData.set('page', '1');
+    formData.set('integration', 'ke_search');
+    formData.set('chatIdentifier', chatIdentifier);
+    formData.set('originalQuery', originalQuery);
+    formData.set('effectiveQuery', effectiveQuery);
+
+    const response = await fetch(summaryNormalizeUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+
+    const capturedResults = await response.json();
+
+The returned ``capturedResults`` object can be assigned to
+``settings.search.capturedResults`` before starting the normal AI Assistant
+SSE chat request. The same ``SearchResultPayloadBuilder`` is used by the Fluid
+ViewHelper and this JSON action, so both integrations produce identical data.
+
 Search result payload
 =====================
 

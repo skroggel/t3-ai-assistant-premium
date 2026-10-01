@@ -53,6 +53,32 @@ final class SearchResultPayloadBuilder
             return [];
         }
 
+        return $this->buildFromControl($rows, $fields, $total, $page, $control);
+    }
+
+    /**
+     * Builds a payload from an explicitly supplied control payload.
+     *
+     * This is used by JSON clients that do not render the Fluid ViewHelper.
+     *
+     * @param array<int, mixed> $rows Search result rows.
+     * @param array<string, string> $fields Search field mapping.
+     * @param int $total Total result count.
+     * @param int $page Current result page.
+     * @param array<string, mixed> $control Search control metadata.
+     * @return array<string, mixed> Normalized result payload.
+     */
+    public function buildFromControl(
+        array $rows,
+        array $fields,
+        int $total,
+        int $page,
+        array $control,
+    ): array {
+        if (!(bool)($control['processed'] ?? false)) {
+            return [];
+        }
+
         $results = [];
         foreach ($rows as $position => $row) {
             if (!is_array($row)) {

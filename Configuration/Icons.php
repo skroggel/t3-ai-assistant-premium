@@ -5,8 +5,8 @@ use TYPO3\CMS\Core\Imaging\IconProvider\SvgIconProvider;
 $iconList = [];
 foreach (
 [
-    'aiassistantpremium-plugin-kesearch' => 'Extension.svg',
-    'aiassistantpremium-plugin-kesearchsummary' => 'Extension.svg',
+    'aiassistantpremium-plugin-search' => 'Extension.svg',
+    'aiassistantpremium-plugin-searchsummary' => 'Extension.svg',
 ] as $identifier => $path) {
     $iconList[$identifier] = [
         'provider' => SvgIconProvider::class,

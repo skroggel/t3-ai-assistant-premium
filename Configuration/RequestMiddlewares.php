@@ -13,7 +13,10 @@ return [
             'before' => [
                 'typo3/cms-frontend/shortcut-and-mountpoint-redirect',
                 'typo3/cms-frontend/csp-headers',
+                'Tpwd/KeSearchPremium/SearchApi'
             ],
         ],
     ],
 ];
+
+

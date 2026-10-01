@@ -21,11 +21,13 @@ use Madj2k\AiAssistantPremium\Search\Request\NestedParameterAccessor;
 use Madj2k\AiAssistantPremium\Search\Service\QueryOptimizer;
 use Madj2k\AiAssistantPremium\Search\Service\SearchStateService;
 use Madj2k\AiAssistantPremium\License\LicenseService;
+use Madj2k\AiAssistantPremium\License\LicenseCheckInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use TYPO3\CMS\Core\Http\RedirectResponse;
+use TYPO3\CMS\Core\Http\JsonResponse;
 use TYPO3\CMS\Core\Http\Uri;
 
 /**
@@ -60,13 +62,14 @@ final readonly class SearchQueryMiddleware implements MiddlewareInterface
      * @param \Madj2k\AiAssistantPremium\Search\Request\NestedParameterAccessor $parameterAccessor
      * @param \Madj2k\AiAssistantPremium\Search\Service\QueryOptimizer $queryOptimizer
      * @param \Madj2k\AiAssistantPremium\Search\Service\SearchStateService $searchStateService
+     * @param \Madj2k\AiAssistantPremium\License\LicenseService $licenseService
      */
     public function __construct(
         private SearchIntegrationRegistry $integrationRegistry,
         private NestedParameterAccessor $parameterAccessor,
         private QueryOptimizer $queryOptimizer,
         private SearchStateService $searchStateService,
-        private LicenseService $licenseService,
+        private LicenseCheckInterface $licenseService,
     ) {
     }
 
@@ -79,6 +82,7 @@ final readonly class SearchQueryMiddleware implements MiddlewareInterface
      * @return \Psr\Http\Message\ResponseInterface
      * @throws \JsonException
      * @throws \Random\RandomException
+     * @throws \TYPO3\CMS\Core\Cache\Exception\NoSuchCacheException
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
@@ -108,13 +112,18 @@ final readonly class SearchQueryMiddleware implements MiddlewareInterface
         $query = trim((string)$nativeQuery);
 
         $chatIdentifier = $this->normalizeChatIdentifier((string)($control['chatIdentifier'] ?? ''));
-        $effectiveQuery = $this->queryOptimizer->optimize(
-            query: $query,
-            profileUid: $profileUid,
-            chatIdentifier: $chatIdentifier,
-            integration: $integration->identifier,
-            request: $request,
-        );
+        try {
+            $effectiveQuery = $this->queryOptimizer->optimize(
+                query: $query,
+                profileUid: $profileUid,
+                chatIdentifier: $chatIdentifier,
+                integration: $integration->identifier,
+                request: $request,
+            );
+        } catch (\Throwable) {
+            // An unavailable AI service disables the optional search optimization.
+            return $handler->handle($request);
+        }
 
         $state = $this->searchStateService->encode([
             'processed' => 1,
@@ -123,6 +132,17 @@ final readonly class SearchQueryMiddleware implements MiddlewareInterface
             'originalQuery' => $query,
             'effectiveQuery' => $effectiveQuery,
         ]);
+
+        if (strtolower((string)($control['response'] ?? '')) === 'json') {
+            return new JsonResponse([
+                'originalQuery' => $query,
+                'effectiveQuery' => $effectiveQuery,
+                'optimized' => $effectiveQuery !== $query,
+                'integration' => $integration->identifier,
+                'chatIdentifier' => $chatIdentifier,
+                'state' => $state,
+            ]);
+        }
 
         $redirectUri = $this->buildRedirectUri(
             request: $request,

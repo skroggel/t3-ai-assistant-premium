@@ -5,11 +5,11 @@ defined('TYPO3') or die('Access denied.');
 call_user_func(
     function ($extensionKey) {
         $pluginConfig = [
-            'KeSearch' => [
-                'flexFormFile' => 'KeSearch',
+            'Search' => [
+                'flexFormFile' => 'Search',
             ],
-            'KeSearchSummary' => [
-                'flexFormFile' => 'KeSearchSummary',
+            'SearchSummary' => [
+                'flexFormFile' => 'SearchSummary',
             ],
         ];
 

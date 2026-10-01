@@ -2,16 +2,16 @@
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
 	<file source-language="en" datatype="plaintext" original="messages" date="2026-06-13T00:00:00Z" product-name="ai_assistant_premium">
 		<body>
-			<trans-unit id="plugin.tx_aiassistantpremium_kesearch.title">
+			<trans-unit id="plugin.tx_aiassistantpremium_search.title">
 				<source>AI search enhancer</source>
 			</trans-unit>
-			<trans-unit id="plugin.tx_aiassistantpremium_kesearch.description">
+			<trans-unit id="plugin.tx_aiassistantpremium_search.description">
 				<source>Adds optional AI query optimization to an existing search-engine form.</source>
 			</trans-unit>
-			<trans-unit id="plugin.tx_aiassistantpremium_kesearchsummary.title">
+			<trans-unit id="plugin.tx_aiassistantpremium_searchsummary.title">
 				<source>AI search summary</source>
 			</trans-unit>
-			<trans-unit id="plugin.tx_aiassistantpremium_kesearchsummary.description">
+			<trans-unit id="plugin.tx_aiassistantpremium_searchsummary.description">
 				<source>Summarizes the structured results emitted by the search result template.</source>
 			</trans-unit>
 			<trans-unit id="configuration.pdf.linkToMatchedPage.label">

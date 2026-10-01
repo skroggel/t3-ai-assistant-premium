@@ -40,7 +40,7 @@ use TYPO3\CMS\Core\Http\RequestFactory;
  * @package Madj2k\AiAssistantPremium
  * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
  */
-final class LicenseService
+final class LicenseService implements LicenseCheckInterface
 {
     /**
      * TYPO3 extension key.
@@ -326,5 +326,4 @@ final class LicenseService
         return (time() - $lastSuccess) <= self::GRACE_PERIOD;
     }
 }
-
 

@@ -37,3 +37,24 @@ plugin.tx_kesearch_pi1 {
         layoutRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Layouts
     }
 }
+
+# JSON endpoint for non-native search clients (for example Vue).
+aiAssistantPremiumSearchNormalize = PAGE
+aiAssistantPremiumSearchNormalize {
+    typeNum = 1790831370
+    config {
+        disableAllHeaderCode = 1
+        no_cache = 1
+        additionalHeaders.10.header = Content-Type: application/json; charset=utf-8
+    }
+
+    10 = USER
+    10 {
+        userFunc = TYPO3\CMS\Extbase\Core\Bootstrap->run
+        extensionName = AiAssistantPremium
+        pluginName = Search
+        vendorName = Madj2k
+        controller = Search
+        action = normalize
+    }
+}
