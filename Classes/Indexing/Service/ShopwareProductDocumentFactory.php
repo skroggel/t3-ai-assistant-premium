@@ -26,9 +26,9 @@ use Madj2k\AiCore\DTO\DocumentMetadata;
  * Converts Shopware product API payloads into standardized indexable documents.
  *
  * @author Steffen Kroggel <developer@steffenkroggel.de>
- * @copyright Steffen Kroggel <developer@steffenkroggel.de>
+ * @copyright Steffen Kroggel <developer@steffenkroggel.de>, Maximilian Fäßler <maximilian@faesslerweb.de>
  * @package Madj2k\AiAssistantPremium
- * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
+ * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3
  */
 final class ShopwareProductDocumentFactory
 {

@@ -35,9 +35,9 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Console entrypoint for a read-only Shopware API smoke test.
  *
  * @author Steffen Kroggel <developer@steffenkroggel.de>
- * @copyright Steffen Kroggel <developer@steffenkroggel.de>
+ * @copyright Steffen Kroggel <developer@steffenkroggel.de>, Maximilian Fäßler <maximilian@faesslerweb.de>
  * @package Madj2k\AiAssistantPremium
- * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
+ * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3
  */
 final class ShopwareSmokeTestCommand extends Command
 {

@@ -1,0 +1,593 @@
+.aiassistant-pdf-diagnostics__form {
+    margin-top: 20px;
+}
+
+.aiassistant-pdf-diagnostics__form label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.aiassistant-pdf-diagnostics__chunk-config {
+    display: grid;
+    gap: 6px;
+    width: min(100%, 680px);
+    margin-bottom: 16px;
+}
+
+.aiassistant-pdf-diagnostics__chunk-config label {
+    margin: 0;
+}
+
+.aiassistant-pdf-diagnostics__chunk-config select {
+    width: 100%;
+    min-height: 42px;
+    padding: 7px 10px;
+    border: 1px solid #c9ced6;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #252a31;
+    color-scheme: light;
+    font: inherit;
+}
+
+.aiassistant-pdf-diagnostics__chunk-config small {
+    color: var(--aiassistant-muted);
+}
+
+.aiassistant-pdf-diagnostics__form-controls {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    width: min(100%, 680px);
+}
+
+.aiassistant-pdf-diagnostics__file-input {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 42px;
+    padding: 4px;
+    border: 1px solid #c9ced6;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #252a31;
+    color-scheme: light;
+    font: inherit;
+}
+
+.aiassistant-pdf-diagnostics__file-input::file-selector-button {
+    height: 32px;
+    margin: 0 10px 0 0;
+    padding: 0 13px;
+    border: 0;
+    border-right: 1px solid #d9dde3;
+    border-radius: 4px 0 0 4px;
+    background: color-mix(in srgb, var(--aiassistant-accent) 10%, #ffffff);
+    color: var(--aiassistant-accent);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.aiassistant-pdf-diagnostics__file-input:hover::file-selector-button {
+    background: color-mix(in srgb, var(--aiassistant-accent) 17%, #ffffff);
+}
+
+.aiassistant-pdf-diagnostics__form-controls .aiassistant-config__button {
+    flex: 0 0 auto;
+    min-height: 42px;
+    white-space: nowrap;
+}
+
+.aiassistant-pdf-diagnostics__overview-table {
+    min-width: 720px !important;
+}
+
+.aiassistant-pdf-diagnostics__pages {
+    display: grid;
+    gap: 24px;
+    margin-top: 28px;
+}
+
+.aiassistant-pdf-diagnostics__page {
+    border: 1px solid var(--aiassistant-card-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--aiassistant-card-bg);
+}
+
+.aiassistant-pdf-diagnostics__page-title {
+    margin: 0;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--aiassistant-card-border);
+    background: color-mix(in srgb, var(--aiassistant-table-head-bg) 92%, var(--aiassistant-accent) 8%);
+}
+
+.aiassistant-pdf-diagnostics__overlap-warning {
+    margin: 18px 20px 0;
+    padding: 14px 16px;
+    border: 1px solid #e3a008;
+    border-left-width: 4px;
+    border-radius: 6px;
+    background: color-mix(in srgb, #f6c344 15%, var(--aiassistant-card-bg));
+}
+
+.aiassistant-pdf-diagnostics__overlap-warning p {
+    margin: 6px 0 10px;
+    color: var(--aiassistant-muted);
+}
+
+.aiassistant-pdf-diagnostics__overlap-warning ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.aiassistant-pdf-diagnostics__overlap-warning li + li {
+    margin-top: 6px;
+}
+
+.aiassistant-pdf-diagnostics__overlap-warning small {
+    color: var(--aiassistant-muted);
+}
+
+.aiassistant-pdf-diagnostics__granularity {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--aiassistant-card-border);
+    background: color-mix(in srgb, var(--aiassistant-table-head-bg) 65%, var(--aiassistant-card-bg));
+}
+
+.aiassistant-pdf-diagnostics__granularity > span {
+    margin-right: 3px;
+    color: var(--aiassistant-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.aiassistant-pdf-diagnostics__granularity button {
+    padding: 5px 10px;
+    border: 1px solid var(--aiassistant-card-border);
+    border-radius: 999px;
+    background: var(--aiassistant-card-bg);
+    color: var(--aiassistant-muted);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.aiassistant-pdf-diagnostics__granularity button:hover,
+.aiassistant-pdf-diagnostics__granularity button:focus-visible,
+.aiassistant-pdf-diagnostics__granularity button.is-active {
+    outline: 0;
+    border-color: color-mix(in srgb, var(--aiassistant-accent) 45%, var(--aiassistant-card-border));
+    background: color-mix(in srgb, var(--aiassistant-accent) 14%, #ffffff);
+    color: var(--aiassistant-accent);
+}
+
+.aiassistant-pdf-diagnostics__page-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0;
+}
+
+.aiassistant-pdf-diagnostics__preview-column,
+.aiassistant-pdf-diagnostics__workspace {
+    min-width: 0;
+    padding: 20px;
+}
+
+.aiassistant-pdf-diagnostics__preview-column {
+    border-right: 1px solid var(--aiassistant-card-border);
+}
+
+.aiassistant-pdf-diagnostics__viewer-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--aiassistant-card-border);
+}
+
+.aiassistant-pdf-diagnostics__viewer-tab {
+    padding: 7px 13px;
+    border: 1px solid var(--aiassistant-card-border);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--aiassistant-card-bg) 92%, #ffffff);
+    color: var(--aiassistant-muted);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.aiassistant-pdf-diagnostics__viewer-tab:hover,
+.aiassistant-pdf-diagnostics__viewer-tab:focus-visible,
+.aiassistant-pdf-diagnostics__viewer-tab.is-active {
+    outline: 0;
+    border-color: color-mix(in srgb, var(--aiassistant-accent) 45%, var(--aiassistant-card-border));
+    background: color-mix(in srgb, var(--aiassistant-accent) 14%, #ffffff);
+    color: var(--aiassistant-accent);
+}
+
+.aiassistant-pdf-diagnostics__viewer-panel[hidden] {
+    display: none;
+}
+
+.aiassistant-pdf-diagnostics__viewer-hint {
+    margin: 0 0 14px;
+    color: var(--aiassistant-muted);
+    font-size: 12px;
+}
+
+.aiassistant-pdf-diagnostics__chunk-settings {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 14px;
+}
+
+.aiassistant-pdf-diagnostics__chunk-settings > div {
+    display: flex;
+    gap: 5px;
+    padding: 5px 8px;
+    border: 1px solid var(--aiassistant-card-border);
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--aiassistant-table-head-bg) 55%, var(--aiassistant-card-bg));
+    font-size: 11px;
+}
+
+.aiassistant-pdf-diagnostics__chunk-settings dt {
+    color: var(--aiassistant-muted);
+    font-weight: 700;
+}
+
+.aiassistant-pdf-diagnostics__chunk-settings dd {
+    margin: 0;
+}
+
+.aiassistant-pdf-diagnostics__chunks {
+    display: grid;
+    gap: 10px;
+    max-height: 720px;
+    overflow: auto;
+}
+
+.aiassistant-pdf-diagnostics__chunk {
+    overflow: hidden;
+    border: 1px solid var(--aiassistant-card-border);
+    border-radius: 6px;
+    background: var(--aiassistant-card-bg);
+    cursor: pointer;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.aiassistant-pdf-diagnostics__chunk:hover,
+.aiassistant-pdf-diagnostics__chunk:focus-visible,
+.aiassistant-pdf-diagnostics__chunk.is-active {
+    outline: 0;
+    border-color: color-mix(in srgb, var(--aiassistant-accent) 72%, var(--aiassistant-card-border));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--aiassistant-accent) 18%, transparent);
+}
+
+.aiassistant-pdf-diagnostics__chunk header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--aiassistant-card-border);
+    background: color-mix(in srgb, var(--aiassistant-accent) 8%, var(--aiassistant-card-bg));
+}
+
+.aiassistant-pdf-diagnostics__chunk header span {
+    color: var(--aiassistant-muted);
+    font-size: 11px;
+}
+
+.aiassistant-pdf-diagnostics__chunk pre {
+    margin: 0;
+    padding: 10px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--aiassistant-text);
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.aiassistant-pdf-diagnostics__column-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.aiassistant-pdf-diagnostics__column-heading h4 {
+    margin: 0;
+}
+
+.aiassistant-pdf-diagnostics__column-heading span {
+    color: var(--aiassistant-muted);
+    font-size: 12px;
+    text-align: right;
+}
+
+.aiassistant-pdf-diagnostics__preview {
+    position: relative;
+    width: min(100%, 820px);
+    margin: 0 auto;
+    border: 1px solid var(--aiassistant-card-border);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+    background: #ffffff;
+}
+
+.aiassistant-pdf-diagnostics__layout-map {
+    display: grid;
+    gap: 7px;
+    width: min(100%, 820px);
+    margin: 0 auto;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item {
+    display: grid;
+    grid-template-columns: 24px 72px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid hsl(var(--layout-hue) 58% 44% / 35%);
+    border-left-width: 4px;
+    border-radius: 5px;
+    background: hsl(var(--layout-hue) 70% 48% / 6%);
+    color: var(--aiassistant-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-number {
+    color: hsl(var(--layout-hue) 70% 38%);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-shape {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3px;
+    height: 22px;
+    padding: 3px;
+    border: 1px solid hsl(var(--layout-hue) 58% 44% / 38%);
+    border-radius: 3px;
+    background: #ffffff;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-shape i {
+    display: block;
+    border-radius: 1px;
+    background: hsl(var(--layout-hue) 70% 48% / 35%);
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item--columns .aiassistant-pdf-diagnostics__layout-map-shape,
+.aiassistant-pdf-diagnostics__layout-map-item--nested-columns .aiassistant-pdf-diagnostics__layout-map-shape,
+.aiassistant-pdf-diagnostics__layout-map-item--column-blocks .aiassistant-pdf-diagnostics__layout-map-shape,
+.aiassistant-pdf-diagnostics__layout-map-item--side-by-side-tables .aiassistant-pdf-diagnostics__layout-map-shape {
+    grid-template-columns: 1fr 1fr;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item--multi-column-blocks .aiassistant-pdf-diagnostics__layout-map-shape {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item--columns .aiassistant-pdf-diagnostics__layout-map-shape i:nth-child(3),
+.aiassistant-pdf-diagnostics__layout-map-item--nested-columns .aiassistant-pdf-diagnostics__layout-map-shape i:nth-child(3),
+.aiassistant-pdf-diagnostics__layout-map-item--column-blocks .aiassistant-pdf-diagnostics__layout-map-shape i:nth-child(3),
+.aiassistant-pdf-diagnostics__layout-map-item--side-by-side-tables .aiassistant-pdf-diagnostics__layout-map-shape i:nth-child(3) {
+    display: none;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item--table .aiassistant-pdf-diagnostics__layout-map-shape,
+.aiassistant-pdf-diagnostics__layout-map-item--side-by-side-tables .aiassistant-pdf-diagnostics__layout-map-shape {
+    background-color: #ffffff;
+    background-image: linear-gradient(hsl(var(--layout-hue) 60% 42% / 22%) 1px, transparent 1px);
+    background-size: 100% 5px;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item--full-width .aiassistant-pdf-diagnostics__layout-map-shape i + i,
+.aiassistant-pdf-diagnostics__layout-map-item--table .aiassistant-pdf-diagnostics__layout-map-shape i + i,
+.aiassistant-pdf-diagnostics__layout-map-item--header .aiassistant-pdf-diagnostics__layout-map-shape i + i,
+.aiassistant-pdf-diagnostics__layout-map-item--footer .aiassistant-pdf-diagnostics__layout-map-shape i + i {
+    display: none;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item--vector-artwork .aiassistant-pdf-diagnostics__layout-map-shape {
+    background-color: #ffffff;
+    background-image:
+        linear-gradient(135deg, transparent 40%, hsl(var(--layout-hue) 65% 45% / 28%) 41% 48%, transparent 49%),
+        linear-gradient(45deg, transparent 40%, hsl(var(--layout-hue) 65% 45% / 20%) 41% 48%, transparent 49%);
+    background-size: 9px 9px;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item--vector-artwork .aiassistant-pdf-diagnostics__layout-map-shape i {
+    display: none;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-label {
+    display: grid;
+    gap: 1px;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-label small {
+    color: var(--aiassistant-muted);
+}
+
+.aiassistant-pdf-diagnostics__layout-map-label .aiassistant-pdf-diagnostics__excluded-label {
+    color: #b54708;
+    font-weight: 700;
+}
+
+.aiassistant-pdf-diagnostics__layout-map-item:hover,
+.aiassistant-pdf-diagnostics__layout-map-item:focus-visible,
+.aiassistant-pdf-diagnostics__layout-map-item.is-active {
+    outline: 0;
+    border-color: hsl(var(--layout-hue) 72% 38%);
+    background: hsl(var(--layout-hue) 78% 48% / 16%);
+    box-shadow: 0 0 0 2px hsl(var(--layout-hue) 70% 44% / 12%);
+}
+
+.aiassistant-pdf-diagnostics__preview img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.aiassistant-pdf-diagnostics__overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.aiassistant-pdf-diagnostics__layout-region {
+    position: absolute;
+    z-index: 2;
+    box-sizing: border-box;
+    border: 2px dashed hsl(var(--layout-hue) 72% 38% / 78%);
+    border-radius: 3px;
+    background: hsl(var(--layout-hue) 76% 50% / 3%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease, background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+[data-pdf-diagnostics-layer][hidden],
+[data-pdf-diagnostics-text-layer][hidden] {
+    display: none;
+}
+
+.aiassistant-pdf-diagnostics__layout-region.is-active {
+    z-index: 4;
+    border-color: hsl(var(--layout-hue) 80% 32%);
+    background: hsl(var(--layout-hue) 84% 50% / 16%);
+    box-shadow: 0 0 0 3px hsl(var(--layout-hue) 76% 42% / 20%);
+    opacity: 1;
+}
+
+.aiassistant-pdf-diagnostics__region {
+    position: absolute;
+    z-index: 3;
+    box-sizing: border-box;
+    min-width: 4px;
+    min-height: 4px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid hsl(var(--region-hue) 78% 46% / 55%);
+    border-radius: 2px;
+    background: hsl(var(--region-hue) 82% 52% / 9%);
+    color: transparent;
+    pointer-events: auto;
+    cursor: crosshair;
+    transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.aiassistant-pdf-diagnostics__region--line {
+    border-width: 1.5px;
+    background: hsl(var(--region-hue) 82% 52% / 6%);
+}
+
+.aiassistant-pdf-diagnostics__page.is-chunk-mode .aiassistant-pdf-diagnostics__region--line {
+    border-color: transparent;
+    background: transparent;
+    pointer-events: none;
+}
+
+.aiassistant-pdf-diagnostics__page.is-chunk-mode .aiassistant-pdf-diagnostics__region--line.is-chunk-active {
+    z-index: 4;
+    border: 1.5px solid color-mix(in srgb, var(--aiassistant-accent) 86%, #8f2508);
+    background: color-mix(in srgb, var(--aiassistant-accent) 24%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--aiassistant-accent) 18%, transparent);
+}
+
+.aiassistant-pdf-diagnostics__page.is-chunk-mode .aiassistant-pdf-diagnostics__region--line span {
+    display: none;
+}
+
+.aiassistant-pdf-diagnostics__region span {
+    position: absolute;
+    top: -15px;
+    left: -1px;
+    min-width: 16px;
+    padding: 1px 3px;
+    border-radius: 2px 2px 0 0;
+    background: hsl(var(--region-hue) 70% 40% / 88%);
+    color: #ffffff;
+    font-size: 9px;
+    line-height: 13px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.aiassistant-pdf-diagnostics__region:hover,
+.aiassistant-pdf-diagnostics__region:focus-visible,
+.aiassistant-pdf-diagnostics__region.is-active {
+    z-index: 3;
+    outline: 0;
+    border-color: hsl(var(--region-hue) 82% 38%);
+    background: hsl(var(--region-hue) 88% 52% / 28%);
+    box-shadow: 0 0 0 2px hsl(var(--region-hue) 82% 45% / 25%);
+}
+
+.aiassistant-pdf-diagnostics__region:hover span,
+.aiassistant-pdf-diagnostics__region:focus-visible span,
+.aiassistant-pdf-diagnostics__region.is-active span {
+    opacity: 1;
+}
+
+.aiassistant-pdf-diagnostics__text .aiassistant-config__code-block {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    max-height: 720px;
+    margin: 0;
+}
+
+.aiassistant-pdf-diagnostics__text-region {
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid hsl(var(--region-hue) 72% 44% / 38%);
+    background: hsl(var(--region-hue) 82% 52% / 7%);
+    color: inherit;
+    transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.aiassistant-pdf-diagnostics__text-region:hover,
+.aiassistant-pdf-diagnostics__text-region:focus-visible,
+.aiassistant-pdf-diagnostics__text-region.is-active {
+    outline: 0;
+    background: hsl(var(--region-hue) 88% 52% / 30%);
+    box-shadow: 0 0 0 2px hsl(var(--region-hue) 82% 45% / 18%);
+}
+
+@media (max-width: 960px) {
+    .aiassistant-pdf-diagnostics__page-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .aiassistant-pdf-diagnostics__preview-column {
+        border-right: 0;
+        border-bottom: 1px solid var(--aiassistant-card-border);
+    }
+}
+
+@media (max-width: 720px) {
+    .aiassistant-pdf-diagnostics__form-controls {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .aiassistant-pdf-diagnostics__form-controls .aiassistant-config__button {
+        align-self: flex-start;
+    }
+}
