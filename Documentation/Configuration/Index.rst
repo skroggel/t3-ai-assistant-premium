@@ -49,6 +49,23 @@ Site set
 The site set ``madj2k/ai-assistant-premium`` imports the Premium setup and is the
 recommended configuration entry point for projects using TYPO3 site sets.
 
+Premium site settings
+---------------------
+
+The Premium site set provides the following setting in the site-specific
+``settings.yaml`` file:
+
+..  code-block:: yaml
+
+    aiAssistantPremium:
+      useClassicalSearch: true
+
+``aiAssistantPremium.useClassicalSearch``
+    Boolean, default ``true``. Enables the classic Fluid/KeSearch search
+    integration. Set it to ``false`` when the search result list is rendered
+    entirely by the JavaScript/Vue application. The classic KeSearch template
+    and partial overrides are only loaded while this setting is enabled.
+
 FlexForms
 =========
 

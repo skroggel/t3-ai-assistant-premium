@@ -1,0 +1,12 @@
+categories:
+  aiAssistantPremium:
+    label: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_be.xlf:settings.category.aiAssistantPremium.label'
+    description: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_be.xlf:settings.category.aiAssistantPremium.description'
+
+settings:
+  aiAssistantPremium.useClassicalSearch:
+    label: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_be.xlf:settings.useClassicalSearch.label'
+    description: 'LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_be.xlf:settings.useClassicalSearch.description'
+    type: bool
+    default: true
+    category: aiAssistantPremium

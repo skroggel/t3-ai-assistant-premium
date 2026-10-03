@@ -32,6 +32,7 @@ plugin.tx_aiassistantpremium {
 
 [{$aiAssistantPremium.useClassicalSearch} == 1]
     plugin.tx_kesearch_pi1 {
+
         view {
             partialRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Partials
             templateRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Templates

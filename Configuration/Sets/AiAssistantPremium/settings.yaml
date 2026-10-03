@@ -1,9 +1,3 @@
 aiAssistantPremium:
   # Use the classic Fluid/KeSearch template integration by default.
   useClassicalSearch: true
-
-  # Assistant profile UIDs allowed for public JSON requests on this site.
-  allowedAssistantProfiles: []
-
-  # Lifetime of the signed frontend request token in seconds.
-  requestTokenTtl: 7200

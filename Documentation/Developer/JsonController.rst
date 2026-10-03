@@ -31,11 +31,13 @@ the Premium Search plugin:
 ..  code-block:: text
 
     tx_aiassistantpremium_search[query]
+    tx_aiassistantpremium_search[startTimestamp]
     tx_aiassistantpremium_search[assistantProfile]
     tx_aiassistantpremium_search[chatIdentifier]
     tx_aiassistantpremium_search[settingsJson]
-    tx_aiassistantpremium_search[token]
+    tx_aiassistantpremium_search[requestToken]
     tx_aiassistantpremium_search[userLanguage]
+    tx_aiassistantpremium_search[directInteraction]
 
 The controller does not accept search result rows. The Summary flow uses the
 existing Assistant SSE chat instead. Its canonical payload is placed in
@@ -79,7 +81,7 @@ Orchestrator it verifies:
 
 * the Premium license;
 * the Assistant profile against the active site's
-  ``aiAssistantPremium.allowedAssistantProfiles`` setting;
+  ``aiAssistant.allowedAssistantProfiles`` setting;
 * the signed frontend token;
 * the site, Assistant profile and chat identifier bound into that token;
 

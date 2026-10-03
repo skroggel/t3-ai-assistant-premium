@@ -58,7 +58,7 @@ also be listed in the active site configuration:
 
 ..  code-block:: yaml
 
-    aiAssistantPremium:
+    aiAssistant:
       allowedAssistantProfiles:
         - 1001
       requestTokenTtl: 7200

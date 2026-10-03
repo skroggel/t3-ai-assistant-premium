@@ -246,10 +246,13 @@ server-rendered element properties:
 ..  code-block:: text
 
     tx_aiassistantpremium_search[query]=<searchQuery>
+    tx_aiassistantpremium_search[startTimestamp]=<session timestamp>
     tx_aiassistantpremium_search[assistantProfile]=<configured profile>
     tx_aiassistantpremium_search[chatIdentifier]=<configured identifier>
     tx_aiassistantpremium_search[settingsJson]=<runtime settings>
-    tx_aiassistantpremium_search[token]=<signed token>
+    tx_aiassistantpremium_search[requestToken]=<signed token>
+    tx_aiassistantpremium_search[userLanguage]=<user language>
+    tx_aiassistantpremium_search[directInteraction]=<optional direct interaction>
 
 The Vue application does not construct these fields itself and does not need
 to know that KeSearch stores its query in
@@ -359,7 +362,7 @@ The token is bound to the site, Assistant profile and chat identifier. The JSON
 controller checks:
 
 * Premium license validity;
-* the site allowlist ``aiAssistantPremium.allowedAssistantProfiles``;
+* the site allowlist ``aiAssistant.allowedAssistantProfiles``;
 * token signature, expiry and context;
 * the configured Assistant profile and token for the optimizer request.
 

@@ -75,8 +75,9 @@ const assistant = async ({ query, settingsJson = '{}', userLanguage = '' } = {})
     formData.set(`${controlParameter}[query]`, query || '');
     formData.set(`${controlParameter}[assistantProfile]`, String(props.assistantProfile));
     formData.set(`${controlParameter}[chatIdentifier]`, props.chatIdentifier);
+    formData.set(`${controlParameter}[startTimestamp]`, String(Math.floor(Date.now() / 1000)));
     formData.set(`${controlParameter}[settingsJson]`, settingsJson);
-    formData.set(`${controlParameter}[token]`, props.requestToken);
+    formData.set(`${controlParameter}[requestToken]`, props.requestToken);
     formData.set(`${controlParameter}[userLanguage]`, userLanguage);
 
     return requestJson(props.endpoint, formData);

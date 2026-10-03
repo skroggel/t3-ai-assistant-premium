@@ -15,11 +15,12 @@ declare(strict_types=1);
 
 namespace Madj2k\AiAssistantPremium\Controller;
 
+use Madj2k\AiAssistant\Controller\AbstractController as AiAssistantAbstractController;
 use Madj2k\AiAssistant\Assistant\Domain\Repository\AssistantProfileRepository;
 use Madj2k\AiAssistant\Assistant\Frontend\ChatOptionsResolver;
 use Madj2k\AiAssistantPremium\License\LicenseService;
 use Madj2k\AiAssistantPremium\Search\Middleware\SearchQueryMiddleware;
-use Madj2k\AiAssistantPremium\Security\FrontendRequestTokenService;
+use Madj2k\AiAssistant\Assistant\Service\FrontendRequestTokenService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
@@ -35,7 +36,7 @@ use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
  * @package Madj2k\AiAssistantPremium
  * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
  */
-class SearchController extends AbstractController
+class SearchController extends AiAssistantAbstractController
 {
     /**
      * Constructor
@@ -44,7 +45,7 @@ class SearchController extends AbstractController
      * @param \Madj2k\AiAssistantPremium\License\LicenseService $licenseService
      * @param \Madj2k\AiAssistant\Assistant\Frontend\ChatOptionsResolver $chatOptionsResolver
      * @param \Psr\Log\LoggerInterface $logger
-     * @param \Madj2k\AiAssistantPremium\Security\FrontendRequestTokenService $requestTokenService
+     * @param \Madj2k\AiAssistant\Assistant\Service\FrontendRequestTokenService $requestTokenService
      */
     public function __construct(
         AssistantProfileRepository $assistantProfileRepository,
@@ -104,6 +105,7 @@ class SearchController extends AbstractController
         $assistantProfile = (int)($this->settings['assistantProfile'] ?? 0);
         $this->logDisallowedAssistantProfile($assistantProfile);
         $this->view->assignMultiple([
+            'pageUid' => $this->getCurrentPageUid(),
             'chatIdentifier' => $chatIdentifier,
             'integration' => (string)($this->settings['integration'] ?? 'ke_search'),
             'searchString' => trim((string)($metadata['originalQuery'] ?? '')),
@@ -113,6 +115,10 @@ class SearchController extends AbstractController
                 $this->chatOptionsResolver->toFrontendOptions($chatOptions, $this->settings)
             ),
             'labelsJson' => $this->jsonEncodeSettings($this->getFrontendLabels()),
+            'requestToken' => $this->createRequestToken(
+                $assistantProfile,
+                $chatIdentifier,
+            ),
         ]);
 
         return $this->htmlResponse();
@@ -130,7 +136,7 @@ class SearchController extends AbstractController
 
         $this->logger->warning('Premium search assistant profile is not allowed for this site.', [
             'assistant_profile' => $assistantProfile,
-            'allowed_assistant_profiles' => $this->getPremiumSiteSettings()['allowedAssistantProfiles'] ?? [],
+            'allowed_assistant_profiles' => $this->getAssistantSiteSettings()['allowedAssistantProfiles'] ?? [],
             'page_uid' => $this->getCurrentPageUid(),
         ]);
     }

@@ -5,6 +5,7 @@
             :endpoint="sseEndpoint"
             :assistant-profile="assistantProfile"
             :chat-identifier="chatIdentifier"
+            :request-token="requestToken"
             :start-timestamp="startTimestamp"
             :settings-json="runtimeSettings"
             :chat-options-json="chatOptionsJson"
@@ -25,6 +26,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
  * @property {string} query Original search query used for the summary.
  * @property {string|number} assistantProfile Assistant profile uid.
  * @property {string} chatIdentifier Stable search/chat identifier.
+ * @property {string} requestToken Signed frontend request token.
  * @property {string|number} startTimestamp Session reset timestamp.
  * @property {string} settingsJson Serialized runtime settings.
  * @property {string} chatOptionsJson Serialized normalized frontend chat options.
@@ -39,6 +41,7 @@ const props = defineProps({
     query: { type: String, default: '' },
     assistantProfile: { type: [String, Number], default: 0 },
     chatIdentifier: { type: String, default: '' },
+    requestToken: { type: String, default: '' },
     startTimestamp: { type: [String, Number], default: 0 },
 
     // Runtime settings passed to the nested assistant chat.

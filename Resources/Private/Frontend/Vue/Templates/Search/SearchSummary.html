@@ -17,10 +17,11 @@
     />
 
     <ai-assistant-search-summary
-        sse-endpoint="{f:uri.action(action: 'stream', controller: 'Chat', extensionName: 'AiAssistant', pluginName: 'Chat', pageType: '1790831370')}"
+        sse-endpoint="{f:uri.action(action: 'stream', controller: 'Chat', extensionName: 'AiAssistant', pluginName: 'Chat', pageType: '1790831370', arguments: '{id: pageUid}')}"
         query="{searchString -> f:format.htmlspecialchars()}"
         assistant-profile="{settings.assistantProfile}"
         chat-identifier="{chatIdentifier}"
+        request-token="{requestToken}"
         integration="{integration}"
         start-timestamp="{startTimestamp}"
         settings-json="{settingsJson -> f:format.htmlspecialchars()}"
