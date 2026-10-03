@@ -48,4 +48,5 @@ final readonly class SearchIntegration
     {
         return (string)($this->queryParameterPath[0] ?? '');
     }
+
 }

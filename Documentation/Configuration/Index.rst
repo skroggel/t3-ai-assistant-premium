@@ -39,8 +39,9 @@ The default search configuration is:
         formSelector = #form_kesearch_pi1
     }
 
-The ``ke_search`` plugin receives Premium template root paths at a high numeric
-priority so the shipped integration templates can participate in rendering.
+The Premium frontend uses the compiled Vue custom elements. Native search
+integration details are documented in :ref:`premium-classical-search`; the Vue
+request flow is documented in :ref:`premium-vue-search`.
 
 Site set
 ========
@@ -65,6 +66,16 @@ The search enhancement plugin exposes:
 
 The search-summary plugin selects an assistant profile used to process the
 browser result payload.
+
+Search rendering mode
+----------------------
+
+``aiAssistantPremium.useClassicalSearch``
+    Selects the classic Fluid/KeSearch template integration when enabled. The
+    default is ``true``. Set it to ``false`` when the site renders the search
+    result list entirely through its JavaScript/Vue application. The classic
+    KeSearch template and partial overrides are only loaded while this setting
+    is enabled.
 
 AI Assistant backend configuration
 ==================================

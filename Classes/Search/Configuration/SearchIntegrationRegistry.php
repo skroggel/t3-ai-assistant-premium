@@ -57,4 +57,5 @@ final readonly class SearchIntegrationRegistry
     {
         return $this->integrations[trim($identifier)] ?? null;
     }
+
 }

@@ -13,3 +13,4 @@ extension's pipeline and indexing contracts.
 
     Architecture
     SearchContract
+    JsonController

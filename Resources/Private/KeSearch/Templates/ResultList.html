@@ -1,10 +1,9 @@
 <html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
       xmlns:kesearch="http://typo3.org/ns/Tpwd/KeSearch/ViewHelpers"
-      xmlns:aiAssistantPremium="http://typo3.org/ns/Madj2k/AiAssistantPremium/ViewHelpers"
       data-namespace-typo3-fluid="true">
-    <f:layout name="General" />
+<f:layout name="General" />
 
-    <f:comment><!--
+<f:comment><!--
     =====================
     Templates/ResultList.html
 
@@ -14,36 +13,39 @@
     {extConfPremium}
     --></f:comment>
 
-    <f:section name="content">
-        <f:if condition="{wordsTooShort}">
-            <div class="messsage">{f:translate(key: 'LLL:EXT:ke_search/Resources/Private/Language/locallang_searchbox.xlf:searchword_length_error', arguments: {0: extConf.searchWordLength})}</div>
-        </f:if>
+<f:section name="content">
+    <f:asset.script
+        identifier="ai-assistant-premium-vue"
+        src="EXT:ai_assistant_premium/Resources/Public/JavaScript/ai-assistant-premium.js"
+    />
 
-        <f:if condition="{resultListAdditionalRawContent}">
-            <f:format.raw>{resultListAdditionalRawContent}</f:format.raw>
-        </f:if>
+    <f:if condition="{wordsTooShort}">
+        <div class="messsage">{f:translate(key: 'LLL:EXT:ke_search/Resources/Private/Language/locallang_searchbox.xlf:searchword_length_error', arguments: {0: extConf.searchWordLength})}</div>
+    </f:if>
 
-        <aiAssistantPremium:search.resultPayload
-            results="{resultrows}"
-            total="{numberofresults}"
-            page="{aiAssistantPremium:keSearch.searchPage()}"
-            idField="orig_uid"
-            titleField="title_text"
-            textField="content_text"
-            urlField="url"
-            typeField="type"
-            pageIdField="orig_pid"
-            changedAtField="date_timestamp"
-        />
+    <f:if condition="{resultListAdditionalRawContent}">
+        <f:format.raw>{resultListAdditionalRawContent}</f:format.raw>
+    </f:if>
 
-        <f:if condition="{isEmptySearch}">
-            <f:then>
-                <f:if condition="{conf.showTextInsteadOfResults}">
-                    <f:then>
-                        <f:format.raw>{conf.textForResults}</f:format.raw>
-                    </f:then>
-                    <f:else>
-                        <f:render partial="ResultRows" arguments="{
+    <ai-assistant-search-payload-builder
+        rows-json="{resultrows -> f:format.json() -> f:format.htmlspecialchars()}"
+        id-field="orig_uid"
+        title-field="title_text"
+        text-field="content_text"
+        url-field="url"
+        type-field="type"
+        page-id-field="orig_pid"
+        changed-at-field="date_timestamp"
+    ></ai-assistant-search-payload-builder>
+
+    <f:if condition="{isEmptySearch}">
+        <f:then>
+            <f:if condition="{conf.showTextInsteadOfResults}">
+                <f:then>
+                    <f:format.raw>{conf.textForResults}</f:format.raw>
+                </f:then>
+                <f:else>
+                    <f:render partial="ResultRows" arguments="{
                         conf: conf,
                         numberofresults: numberofresults,
                         resultrows: resultrows,
@@ -52,16 +54,16 @@
                         queryTime:queryTime,
                         queryTimeText:queryTimeText
                         }" />
-                    </f:else>
-                </f:if>
-            </f:then>
-            <f:else>
-                <f:if condition="{numberofresults} == 0">
-                    <f:then>
-                        <f:render partial="NoResults" arguments="{conf: conf, noResultsText: noResultsText}" />
-                    </f:then>
-                    <f:else>
-                        <f:render partial="ResultRows" arguments="{
+                </f:else>
+            </f:if>
+        </f:then>
+        <f:else>
+            <f:if condition="{numberofresults} == 0">
+                <f:then>
+                    <f:render partial="NoResults" arguments="{conf: conf, noResultsText: noResultsText}" />
+                </f:then>
+                <f:else>
+                    <f:render partial="ResultRows" arguments="{
                             conf: conf,
                             numberofresults: numberofresults,
                             resultrows: resultrows,
@@ -70,13 +72,13 @@
                             queryTime:queryTime,
                             queryTimeText:queryTimeText
                             }" />
-                    </f:else>
-                </f:if>
-            </f:else>
-        </f:if>
-        <f:if condition="errors">
-            <f:for each="{errors}" as="error">
-                <div class="ke_search-error">{error}</div>
-            </f:for>
-        </f:if>
+                </f:else>
+            </f:if>
+        </f:else>
+    </f:if>
+    <f:if condition="errors">
+        <f:for each="{errors}" as="error">
+            <div class="ke_search-error">{error}</div>
+        </f:for>
+    </f:if>
 </f:section>

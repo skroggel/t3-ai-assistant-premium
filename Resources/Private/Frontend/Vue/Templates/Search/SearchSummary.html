@@ -1,0 +1,30 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      data-namespace-typo3-fluid="true">
+
+    <f:asset.script
+        identifier="ai-assistant-transport"
+        src="EXT:ai_assistant/Resources/Public/JavaScript/ai-assistant-transport.js"
+    />
+
+    <f:asset.script
+        identifier="ai-assistant-chat-vue"
+        src="EXT:ai_assistant/Resources/Public/JavaScript/ai-assistant-chat.js"
+    />
+
+    <f:asset.script
+        identifier="ai-assistant-premium-vue"
+        src="EXT:ai_assistant_premium/Resources/Public/JavaScript/ai-assistant-premium.js"
+    />
+
+    <ai-assistant-search-summary
+        sse-endpoint="{f:uri.action(action: 'stream', controller: 'Chat', extensionName: 'AiAssistant', pluginName: 'Chat', pageType: '1790831370')}"
+        query="{searchString -> f:format.htmlspecialchars()}"
+        assistant-profile="{settings.assistantProfile}"
+        chat-identifier="{chatIdentifier}"
+        integration="{integration}"
+        start-timestamp="{startTimestamp}"
+        settings-json="{settingsJson -> f:format.htmlspecialchars()}"
+        chat-options-json="{chatOptionsJson -> f:format.htmlspecialchars()}"
+        labels-json="{labelsJson -> f:format.htmlspecialchars()}"
+    ></ai-assistant-search-summary>
+</html>

@@ -1,0 +1,27 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      data-namespace-typo3-fluid="true">
+
+
+    <f:asset.script
+        identifier="ai-assistant-premium-vue"
+        src="EXT:ai_assistant_premium/Resources/Public/JavaScript/ai-assistant-premium.js"
+    />
+
+    <ai-assistant-search-enhancer
+        integration="{settings.search.integration}"
+        form-selector="{settings.search.formSelector}"
+        assistant-profile="{settings.assistantProfile}"
+        chat-identifier="{chatIdentifier}"
+    ></ai-assistant-search-enhancer>
+
+    <ai-assistant-search-enhancer-json
+        integration="{settings.search.integration}"
+        assistant-profile="{settings.assistantProfile}"
+        chat-identifier="{chatIdentifier}"
+        request-token="{requestToken}"
+        endpoint="{f:uri.action(action: 'assistant', controller: 'Json', extensionName: 'AiAssistantPremium', pluginName: 'Search', pageType: '1790831372', arguments: '{id: pageUid}')}"
+    ></ai-assistant-search-enhancer-json>
+
+    <ai-assistant-search-payload-builder></ai-assistant-search-payload-builder>
+
+</html>

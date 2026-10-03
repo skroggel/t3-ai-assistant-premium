@@ -66,5 +66,7 @@ Search summary is empty
 
 Ensure the summary assistant profile includes
 ``ai_assistant_premium.search_result_retriever`` and that the result template
-creates the normalized browser payload. The retriever does not execute the
-search backend itself.
+renders ``ai-assistant-search-payload-builder`` with the result rows and field
+mapping. The builder publishes ``ai-assistant-search-payload-ready``; the
+Summary custom element consumes that event and starts the existing SSE chat.
+The retriever does not execute the search backend itself.

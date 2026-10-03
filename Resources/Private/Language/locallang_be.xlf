@@ -11,8 +11,32 @@
 			<trans-unit id="plugin.tx_aiassistantpremium_searchsummary.title">
 				<source>AI search summary</source>
 			</trans-unit>
-			<trans-unit id="plugin.tx_aiassistantpremium_searchsummary.description">
+		<trans-unit id="plugin.tx_aiassistantpremium_searchsummary.description">
 				<source>Summarizes the structured results emitted by the search result template.</source>
+			</trans-unit>
+			<trans-unit id="settings.category.aiAssistantPremium.label">
+				<source>AI Assistant Premium</source>
+			</trans-unit>
+			<trans-unit id="settings.category.aiAssistantPremium.description">
+				<source>Configuration for Premium search integration and frontend request security.</source>
+			</trans-unit>
+			<trans-unit id="settings.useClassicalSearch.label">
+				<source>Use classical search integration</source>
+			</trans-unit>
+			<trans-unit id="settings.useClassicalSearch.description">
+				<source>Loads the classic Fluid and KeSearch template overrides. Disable this for a JavaScript/Vue-based search rendering.</source>
+			</trans-unit>
+			<trans-unit id="settings.allowedAssistantProfiles.label">
+				<source>Allowed Assistant profiles</source>
+			</trans-unit>
+			<trans-unit id="settings.allowedAssistantProfiles.description">
+				<source>Assistant profile UIDs allowed for public JSON frontend requests.</source>
+			</trans-unit>
+			<trans-unit id="settings.requestTokenTtl.label">
+				<source>Frontend request token lifetime</source>
+			</trans-unit>
+			<trans-unit id="settings.requestTokenTtl.description">
+				<source>Lifetime of signed frontend request tokens in seconds.</source>
 			</trans-unit>
 			<trans-unit id="configuration.pdf.linkToMatchedPage.label">
 				<source>PDF result links</source>

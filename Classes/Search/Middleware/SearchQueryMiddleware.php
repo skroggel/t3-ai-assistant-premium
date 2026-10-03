@@ -15,10 +15,13 @@ declare(strict_types=1);
  */
 namespace Madj2k\AiAssistantPremium\Search\Middleware;
 
+use Madj2k\AiAssistant\Assistant\Domain\Repository\AssistantProfileRepository;
+use Madj2k\AiCore\Assistant\Application\Orchestrator;
+use Madj2k\AiCore\Assistant\DTO\AssistantRequest;
+use Madj2k\AiCore\Assistant\DTO\ChatOptions;
 use Madj2k\AiAssistantPremium\Search\Configuration\SearchIntegration;
 use Madj2k\AiAssistantPremium\Search\Configuration\SearchIntegrationRegistry;
 use Madj2k\AiAssistantPremium\Search\Request\NestedParameterAccessor;
-use Madj2k\AiAssistantPremium\Search\Service\QueryOptimizer;
 use Madj2k\AiAssistantPremium\Search\Service\SearchStateService;
 use Madj2k\AiAssistantPremium\License\LicenseService;
 use Madj2k\AiAssistantPremium\License\LicenseCheckInterface;
@@ -26,9 +29,12 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Http\JsonResponse;
 use TYPO3\CMS\Core\Http\Uri;
+use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
+use TYPO3\CMS\Extbase\Persistence\Generic\PersistenceManager;
 
 /**
 
@@ -60,16 +66,22 @@ final readonly class SearchQueryMiddleware implements MiddlewareInterface
     /**
      * @param \Madj2k\AiAssistantPremium\Search\Configuration\SearchIntegrationRegistry $integrationRegistry
      * @param \Madj2k\AiAssistantPremium\Search\Request\NestedParameterAccessor $parameterAccessor
-     * @param \Madj2k\AiAssistantPremium\Search\Service\QueryOptimizer $queryOptimizer
+     * @param \Madj2k\AiCore\Assistant\Application\Orchestrator $orchestrator
+     * @param \Madj2k\AiAssistant\Assistant\Domain\Repository\AssistantProfileRepository $assistantProfileRepository
      * @param \Madj2k\AiAssistantPremium\Search\Service\SearchStateService $searchStateService
      * @param \Madj2k\AiAssistantPremium\License\LicenseService $licenseService
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param \TYPO3\CMS\Extbase\Persistence\Generic\PersistenceManager $persistenceManager
      */
     public function __construct(
         private SearchIntegrationRegistry $integrationRegistry,
         private NestedParameterAccessor $parameterAccessor,
-        private QueryOptimizer $queryOptimizer,
+        private Orchestrator $orchestrator,
+        private AssistantProfileRepository $assistantProfileRepository,
         private SearchStateService $searchStateService,
         private LicenseCheckInterface $licenseService,
+        private LoggerInterface $logger,
+        private PersistenceManager $persistenceManager,
     ) {
     }
 
@@ -95,54 +107,80 @@ final readonly class SearchQueryMiddleware implements MiddlewareInterface
         }
 
         if (!$this->licenseService->isValid()) {
+            $this->logger->warning('Premium search optimization skipped: license invalid.');
             return $handler->handle($request);
         }
 
-        $profileUid = max(0, (int)($control['optimizerProfile'] ?? 0));
+        $profileUid = max(0, (int)($control['assistantProfile'] ?? 0));
         $integration = $this->integrationRegistry->get((string)($control['integration'] ?? ''));
         if (!$integration instanceof SearchIntegration) {
+            $this->logger->warning('Premium search optimization skipped: integration not found.', [
+                'integration' => (string)($control['integration'] ?? ''),
+            ]);
             return $handler->handle($request);
         }
 
         $requestParameters = $this->getRequestParameters($request);
         $nativeQuery = $this->parameterAccessor->get($requestParameters, $integration->queryParameterPath);
         if (!is_scalar($nativeQuery) || trim((string)$nativeQuery) === '') {
+            $this->logger->info('Premium search optimization skipped: native query missing.', [
+                'integration' => $integration->identifier,
+            ]);
             return $handler->handle($request);
         }
         $query = trim((string)$nativeQuery);
 
         $chatIdentifier = $this->normalizeChatIdentifier((string)($control['chatIdentifier'] ?? ''));
         try {
-            $effectiveQuery = $this->queryOptimizer->optimize(
+            $profile = $this->assistantProfileRepository->findByUid($profileUid);
+            if ($profile === null) {
+                $this->logger->warning('Premium search optimization skipped: assistant profile not found.', [
+                    'profile_uid' => $profileUid,
+                ]);
+                return $handler->handle($request);
+            }
+
+            $assistantResponse = $this->orchestrator->handle(new AssistantRequest(
                 query: $query,
-                profileUid: $profileUid,
-                chatIdentifier: $chatIdentifier,
-                integration: $integration->identifier,
-                request: $request,
-            );
-        } catch (\Throwable) {
-            // An unavailable AI service disables the optional search optimization.
+                startTimestamp: time(),
+                assistantProfile: $profile,
+                chatIdentifier: $chatIdentifier . ':query-optimizer',
+                serverRequest: $request,
+                chatOptions: new ChatOptions(),
+                runtimeSettings: [
+                    'search' => [
+                        'phase' => 'query-optimization',
+                        'integration' => $integration->identifier,
+                    ],
+                ],
+            ));
+
+            $effectiveQuery = trim($assistantResponse->context['currentQuery'] ?? '') !== ''
+                ? trim($assistantResponse->context['currentQuery'])
+                : $query;
+            $this->persistenceManager->persistAll();
+
+        } catch (\Throwable $exception) {
+            $this->persistenceManager->persistAll();
+            $this->logger->error('Premium search optimization failed; native search continues.', [
+                'integration' => $integration->identifier,
+                'profile_uid' => $profileUid,
+                'chat_identifier' => $chatIdentifier,
+                'exception_class' => $exception::class,
+                'exception_message' => $exception->getMessage(),
+            ]);
             return $handler->handle($request);
         }
 
         $state = $this->searchStateService->encode([
             'processed' => 1,
             'integration' => $integration->identifier,
+            'profileUid' => $profileUid,
             'chatIdentifier' => $chatIdentifier,
             'originalQuery' => $query,
             'effectiveQuery' => $effectiveQuery,
         ]);
 
-        if (strtolower((string)($control['response'] ?? '')) === 'json') {
-            return new JsonResponse([
-                'originalQuery' => $query,
-                'effectiveQuery' => $effectiveQuery,
-                'optimized' => $effectiveQuery !== $query,
-                'integration' => $integration->identifier,
-                'chatIdentifier' => $chatIdentifier,
-                'state' => $state,
-            ]);
-        }
 
         $redirectUri = $this->buildRedirectUri(
             request: $request,

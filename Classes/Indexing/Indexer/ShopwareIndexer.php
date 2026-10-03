@@ -144,6 +144,10 @@ final class ShopwareIndexer extends AbstractIndexer implements IndexerInterface
      * @param \Madj2k\AiCore\Indexing\DTO\IndexingRequest $request Indexing request.
      * @param \Madj2k\AiCore\Indexing\DTO\IndexingResult $result Indexing result.
      * @return void
+     * @throws \DateMalformedStringException
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\IllegalObjectTypeException
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\UnknownObjectException
+     * @throws \Throwable
      */
     private function indexConfiguration(IndexerConfig $configuration, IndexingRequest $request, IndexingResult $result): void
     {

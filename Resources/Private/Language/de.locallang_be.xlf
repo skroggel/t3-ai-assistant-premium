@@ -14,9 +14,41 @@
 				<source>Link to the complete PDF</source>
 				<target>Auf das vollständige PDF verlinken</target>
 			</trans-unit>
-			<trans-unit id="configuration.pdf.linkToMatchedPage.option.matchedPage">
+		<trans-unit id="configuration.pdf.linkToMatchedPage.option.matchedPage">
 				<source>Link directly to the matched page</source>
 				<target>Direkt auf die gefundene Seite verlinken</target>
+			</trans-unit>
+			<trans-unit id="settings.category.aiAssistantPremium.label">
+				<source>AI Assistant Premium</source>
+				<target>AI Assistant Premium</target>
+			</trans-unit>
+			<trans-unit id="settings.category.aiAssistantPremium.description">
+				<source>Configuration for Premium search integration and frontend request security.</source>
+				<target>Konfiguration der Premium-Suchintegration und der Sicherheit von Frontend-Anfragen.</target>
+			</trans-unit>
+			<trans-unit id="settings.useClassicalSearch.label">
+				<source>Use classical search integration</source>
+				<target>Klassische Suchintegration verwenden</target>
+			</trans-unit>
+			<trans-unit id="settings.useClassicalSearch.description">
+				<source>Loads the classic Fluid and KeSearch template overrides. Disable this for a JavaScript/Vue-based search rendering.</source>
+				<target>Lädt die klassischen Fluid- und KeSearch-Template-Overrides. Für eine JavaScript-/Vue-basierte Suche deaktivieren.</target>
+			</trans-unit>
+			<trans-unit id="settings.allowedAssistantProfiles.label">
+				<source>Allowed Assistant profiles</source>
+				<target>Erlaubte Assistant-Profile</target>
+			</trans-unit>
+			<trans-unit id="settings.allowedAssistantProfiles.description">
+				<source>Assistant profile UIDs allowed for public JSON frontend requests.</source>
+				<target>UIDs der Assistant-Profile, die für öffentliche JSON-Anfragen erlaubt sind.</target>
+			</trans-unit>
+			<trans-unit id="settings.requestTokenTtl.label">
+				<source>Frontend request token lifetime</source>
+				<target>Gültigkeitsdauer des Frontend-Request-Tokens</target>
+			</trans-unit>
+			<trans-unit id="settings.requestTokenTtl.description">
+				<source>Lifetime of signed frontend request tokens in seconds.</source>
+				<target>Gültigkeitsdauer signierter Frontend-Request-Tokens in Sekunden.</target>
 			</trans-unit>
 		</body>
 	</file>

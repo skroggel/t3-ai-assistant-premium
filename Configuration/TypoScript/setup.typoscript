@@ -1,13 +1,13 @@
 plugin.tx_aiassistantpremium {
     view {
-        templateRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Templates/
+        templateRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Frontend/Vue/Templates/
         templateRootPaths.10 = {$plugin.tx_aiassistantpremium.view.templateRootPath}
 
-        partialRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Partials/
-        partialRootPaths.10 = EXT:ai_assistant/Resources/Private/Partials/
+        partialRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Frontend/Vue/Partials/
+        partialRootPaths.10 = EXT:ai_assistant/Resources/Private/Frontend/Vue/Partials/
         partialRootPaths.20 = {$plugin.tx_aiassistantpremium.view.partialRootPath}
 
-        layoutRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Layouts/
+        layoutRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Frontend/Vue/Layouts/
         layoutRootPaths.10 = {$plugin.tx_aiassistantpremium.view.layoutRootPath}
     }
     persistence {
@@ -30,18 +30,19 @@ plugin.tx_aiassistantpremium {
     }
 }
 
-plugin.tx_kesearch_pi1 {
-    view {
-        partialRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Partials
-        templateRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Templates
-        layoutRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Layouts
+[{$aiAssistantPremium.useClassicalSearch} == 1]
+    plugin.tx_kesearch_pi1 {
+        view {
+            partialRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Partials
+            templateRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Templates
+            layoutRootPaths.1781590090 = EXT:ai_assistant_premium/Resources/Private/KeSearch/Layouts
+        }
     }
-}
+[END]
 
-# JSON endpoint for non-native search clients (for example Vue).
-aiAssistantPremiumSearchNormalize = PAGE
-aiAssistantPremiumSearchNormalize {
-    typeNum = 1790831370
+aiAssistantPremiumAssistant = PAGE
+aiAssistantPremiumAssistant {
+    typeNum = 1790831372
     config {
         disableAllHeaderCode = 1
         no_cache = 1
@@ -54,7 +55,10 @@ aiAssistantPremiumSearchNormalize {
         extensionName = AiAssistantPremium
         pluginName = Search
         vendorName = Madj2k
-        controller = Search
-        action = normalize
+        switchableControllerActions {
+            Json {
+                1 = assistant
+            }
+        }
     }
 }

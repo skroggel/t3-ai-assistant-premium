@@ -13,22 +13,21 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-
 namespace Madj2k\AiAssistantPremium\Controller;
 
 use Madj2k\AiAssistant\Assistant\Domain\Repository\AssistantProfileRepository;
-use Madj2k\AiAssistant\Controller\AbstractController;
-use Madj2k\AiAssistantPremium\Search\Middleware\SearchQueryMiddleware;
+use Madj2k\AiAssistant\Assistant\Frontend\ChatOptionsResolver;
 use Madj2k\AiAssistantPremium\License\LicenseService;
-use Madj2k\AiAssistantPremium\Search\Result\SearchResultPayloadBuilder;
-use TYPO3\CMS\Core\Http\JsonResponse;
+use Madj2k\AiAssistantPremium\Search\Middleware\SearchQueryMiddleware;
+use Madj2k\AiAssistantPremium\Security\FrontendRequestTokenService;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LoggerInterface;
+use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 
 /**
- * Renders the native-search enhancement metadata and result summary shell.
+ * Class SearchController
  *
- * Query optimization itself belongs to the PSR-15 middleware and search
- * execution remains the responsibility of the configured search engine.
+ * Renders Premium search metadata and Summary-plugin configuration.
  *
  * @author Maximilian Fäßler <maximilian@faesslerweb.de>
  * @author Steffen Kroggel <developer@steffenkroggel.de>
@@ -36,19 +35,33 @@ use Psr\Http\Message\ResponseInterface;
  * @package Madj2k\AiAssistantPremium
  * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
  */
-
-final class SearchController extends AbstractController
+class SearchController extends AbstractController
 {
+    /**
+     * Constructor
+     *
+     * @param \Madj2k\AiAssistant\Assistant\Domain\Repository\AssistantProfileRepository $assistantProfileRepository
+     * @param \Madj2k\AiAssistantPremium\License\LicenseService $licenseService
+     * @param \Madj2k\AiAssistant\Assistant\Frontend\ChatOptionsResolver $chatOptionsResolver
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param \Madj2k\AiAssistantPremium\Security\FrontendRequestTokenService $requestTokenService
+     */
     public function __construct(
         AssistantProfileRepository $assistantProfileRepository,
         private readonly LicenseService $licenseService,
-        private readonly SearchResultPayloadBuilder $payloadBuilder,
+        private readonly ChatOptionsResolver $chatOptionsResolver,
+        private readonly LoggerInterface $logger,
+        FrontendRequestTokenService $requestTokenService,
     ) {
-        parent::__construct($assistantProfileRepository);
+        parent::__construct($assistantProfileRepository, $requestTokenService);
     }
 
+
     /**
-     * Renders metadata used to enhance an existing native search form.
+     * Renders metadata for the native/Vue search enhancer
+     *
+     * @return \Psr\Http\Message\ResponseInterface
+     * @throws \TYPO3\CMS\Core\Cache\Exception\NoSuchCacheException
      */
     public function indexAction(): ResponseInterface
     {
@@ -57,15 +70,27 @@ final class SearchController extends AbstractController
         }
 
         $metadata = $this->getSearchMetadata();
+        $chatIdentifier = $this->resolveChatIdentifier($metadata);
+        $assistantProfile = (int)($this->settings['assistantProfile'] ?? 0);
+        $this->logDisallowedAssistantProfile($assistantProfile);
         $this->view->assignMultiple([
-            'chatIdentifier' => $this->resolveChatIdentifier($metadata),
+            'pageUid' => $this->getCurrentPageUid(),
+            'chatIdentifier' => $chatIdentifier,
+            'requestToken' => $this->createRequestToken(
+                $assistantProfile,
+                $chatIdentifier,
+            ),
         ]);
 
         return $this->htmlResponse();
     }
 
+
     /**
-     * Renders the summary form consumed after search results are available.
+     * Renders the Summary-plugin configuration for the Vue Summary element.
+     *
+     * @return \Psr\Http\Message\ResponseInterface
+     * @throws \TYPO3\CMS\Core\Cache\Exception\NoSuchCacheException
      */
     public function searchSummaryAction(): ResponseInterface
     {
@@ -74,70 +99,78 @@ final class SearchController extends AbstractController
         }
 
         $metadata = $this->getSearchMetadata();
+        $chatIdentifier = $this->resolveChatIdentifier($metadata);
+        $chatOptions = $this->chatOptionsResolver->resolve($this->settings, $this->resolveSiteLanguage());
+        $assistantProfile = (int)($this->settings['assistantProfile'] ?? 0);
+        $this->logDisallowedAssistantProfile($assistantProfile);
         $this->view->assignMultiple([
-            'chatIdentifier' => $this->resolveChatIdentifier($metadata),
+            'chatIdentifier' => $chatIdentifier,
+            'integration' => (string)($this->settings['integration'] ?? 'ke_search'),
             'searchString' => trim((string)($metadata['originalQuery'] ?? '')),
             'startTimestamp' => time(),
             'settingsJson' => $this->jsonEncodeSettings($this->settings),
+            'chatOptionsJson' => $this->jsonEncodeSettings(
+                $this->chatOptionsResolver->toFrontendOptions($chatOptions, $this->settings)
+            ),
+            'labelsJson' => $this->jsonEncodeSettings($this->getFrontendLabels()),
         ]);
 
         return $this->htmlResponse();
     }
 
+
     /**
-     * Normalizes search rows for non-Fluid clients such as Vue.
-     *
-     * @param string $payload JSON encoded result rows.
-     * @param string $fields JSON encoded field mapping.
-     * @param int $total Total result count.
-     * @param int $page Current result page.
-     * @param string $integration Search integration identifier.
-     * @param string $chatIdentifier Stable chat identifier.
-     * @param string $originalQuery Original query.
-     * @param string $effectiveQuery Effective query.
-     * @return ResponseInterface JSON response.
-     * @throws \TYPO3\CMS\Core\Cache\Exception\NoSuchCacheException
+     * Logs a configuration hint when a frontend profile is not allowlisted.
      */
-    public function normalizeAction(
-        string $payload = '[]',
-        string $fields = '{}',
-        int $total = 0,
-        int $page = 1,
-        string $integration = 'ke_search',
-        string $chatIdentifier = '',
-        string $originalQuery = '',
-        string $effectiveQuery = '',
-    ): ResponseInterface {
-
-        if (!$this->licenseService->isValid()) {
-            return new JsonResponse([]);
+    private function logDisallowedAssistantProfile(int $assistantProfile): void
+    {
+        if ($assistantProfile === 0 || $this->isAllowedAssistantProfile($assistantProfile)) {
+            return;
         }
 
-        $rows = json_decode($payload, true);
-        $fieldMapping = json_decode($fields, true);
-        if (!is_array($rows) || !is_array($fieldMapping)) {
-            return new JsonResponse(['error' => 'Invalid search payload.'], 400);
-        }
-
-        return new JsonResponse($this->payloadBuilder->buildFromControl(
-            rows: $rows,
-            fields: array_map('strval', $fieldMapping),
-            total: $total,
-            page: $page,
-            control: [
-                'processed' => 1,
-                'integration' => $integration,
-                'chatIdentifier' => $chatIdentifier,
-                'originalQuery' => $originalQuery,
-                'effectiveQuery' => $effectiveQuery,
-            ],
-        ));
+        $this->logger->warning('Premium search assistant profile is not allowed for this site.', [
+            'assistant_profile' => $assistantProfile,
+            'allowed_assistant_profiles' => $this->getPremiumSiteSettings()['allowedAssistantProfiles'] ?? [],
+            'page_uid' => $this->getCurrentPageUid(),
+        ]);
     }
 
+
     /**
-     * Returns metadata placed on the redirected request by the middleware.
+     * Returns all relevant frontend labels
      *
-     * @return array<string,mixed>
+     * @return array
+     */
+    private function getFrontendLabels(): array
+    {
+        $keys = [
+            'errorMessage' => 'templates_index_index.error_message',
+            'chatLabel' => 'templates_index_index.chat_history',
+            'userLabel' => 'templates_index_index.user_label',
+            'assistantLabel' => 'templates_index_index.assistant_label',
+            'consentMessage' => 'templates_index_index.consent_message',
+            'consentLabel' => 'templates_index_index.consent_button',
+            'inputPlaceholder' => 'templates_index_index.input_placeholder',
+            'submitLabel' => 'templates_index_index.submit',
+            'languageLabel' => 'templates_index_index.response_language',
+            'siteLanguageLabel' => 'templates_index_index.use_site_language',
+            'browserLanguageLabel' => 'templates_index_index.use_browser_language',
+            'languageApplyLabel' => 'templates_index_index.apply_language',
+            'languagePlaceholder' => 'templates_index_index.response_language_placeholder',
+            'languageConfirmationFallback' => 'templates_index_index.language_confirmation_fallback',
+        ];
+
+        $labels = [];
+        foreach ($keys as $name => $key) {
+            $labels[$name] = (string)(LocalizationUtility::translate($key, 'ai_assistant') ?? '');
+        }
+
+        return $labels;
+    }
+
+
+    /**
+     * @return array
      */
     private function getSearchMetadata(): array
     {
@@ -147,10 +180,10 @@ final class SearchController extends AbstractController
         return is_array($metadata) ? $metadata : [];
     }
 
+
     /**
-     * Reuses the search identifier or creates one for a fresh form.
-     *
-     * @param array<string,mixed> $metadata
+     * @param array $metadata
+     * @return string
      */
     private function resolveChatIdentifier(array $metadata): string
     {

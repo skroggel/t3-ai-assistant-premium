@@ -5,6 +5,7 @@ namespace Madj2k\AiAssistantPremium\Tests\Unit\Assistant\Pipeline\Processor;
 
 use Madj2k\AiAssistant\Assistant\Domain\Model\AssistantPipelineStep;
 use Madj2k\AiAssistantPremium\Assistant\Pipeline\Processor\SearchResultRetrieverProcessor;
+use Madj2k\AiAssistantPremium\License\LicenseCheckInterface;
 use Madj2k\AiCore\Assistant\Context\Answer\AnswerState;
 use Madj2k\AiCore\Assistant\Context\Assistant\AssistantContext;
 use Madj2k\AiCore\Assistant\Context\Context;
@@ -42,7 +43,13 @@ final class SearchResultRetrieverProcessorTest extends TestCase
         $step = new AssistantPipelineStep();
         $step->setTitle('Search results');
 
-        (new SearchResultRetrieverProcessor($this->createStub(PipelineLoggerInterface::class)))
+        $licenseService = $this->createStub(LicenseCheckInterface::class);
+        $licenseService->method('isValid')->willReturn(true);
+
+        (new SearchResultRetrieverProcessor(
+            $this->createStub(PipelineLoggerInterface::class),
+            $licenseService,
+        ))
             ->process($context, $step);
 
         self::assertSame(['qdrant', 'Search results'], array_map(
@@ -50,5 +57,28 @@ final class SearchResultRetrieverProcessorTest extends TestCase
             $context->getRetrieval()->getGroups(),
         ));
         self::assertSame('Visible search result content', $context->getRetrieval()->getDocuments()[0]->text);
+    }
+
+    public function testDoesNotProcessCapturedSearchResultsWhenLicenseIsInvalid(): void
+    {
+        $licenseService = $this->createStub(LicenseCheckInterface::class);
+        $licenseService->method('isValid')->willReturn(false);
+
+        $processor = new SearchResultRetrieverProcessor(
+            $this->createStub(PipelineLoggerInterface::class),
+            $licenseService,
+        );
+
+        self::assertFalse($processor->canProcess(
+            new Context(
+                new AssistantContext(),
+                new Request('query', 'chat'),
+                new History([]),
+                new RetrievalResult(),
+                new AnswerState(),
+                new ProcessingTrace(),
+            ),
+            $this->createStub(AssistantPipelineStep::class),
+        ));
     }
 }

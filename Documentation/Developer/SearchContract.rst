@@ -14,12 +14,14 @@ Responsibilities
 Search engine integration
     Owns the actual search request, filters, pagination and result rendering.
 
-Template mapping
-    Maps engine-specific result fields into the common browser payload.
+Vue payload builder
+    Maps engine-specific result fields into the common browser payload through
+    the ``ai-assistant-search-payload-builder`` custom element.
 
 Premium JavaScript
-    Sends the normalized visible result payload to the asynchronous AI summary
-    request.
+    Publishes the normalized payload through the
+    ``ai-assistant-search-payload-ready`` event. The Summary custom element adds
+    its runtime context and starts the existing SSE chat.
 
 ``SearchResultRetrieverProcessor``
     Converts normalized entries into retrieval documents for the assistant
@@ -34,8 +36,8 @@ To integrate another engine:
 2. configure the native form selector;
 3. extend the integration registry if the engine uses a different query
    parameter;
-4. map rendered result rows to the common browser payload in the result
-   template;
+4. render the payload-builder custom element with the result rows and field
+    mapping;
 5. use the existing ``ai_assistant_premium.search_result_retriever`` processor
    in the summary profile.
 

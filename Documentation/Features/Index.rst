@@ -9,4 +9,6 @@ Features
 
     PdfIndexing
     Shopware
-    SearchIntegration
+    Search
+    ClassicalSearch
+    VueSearch

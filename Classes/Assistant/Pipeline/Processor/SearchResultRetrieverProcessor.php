@@ -13,7 +13,6 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-
 namespace Madj2k\AiAssistantPremium\Assistant\Pipeline\Processor;
 
 use Madj2k\AiCore\Assistant\Configuration\PipelineStepConfigurationInterface;
@@ -22,7 +21,7 @@ use Madj2k\AiCore\Assistant\DTO\RetrievalDocument;
 use Madj2k\AiCore\Assistant\Log\PipelineLogMetaData;
 use Madj2k\AiCore\Assistant\Log\PipelineLoggerInterface;
 use Madj2k\AiCore\Assistant\Pipeline\Processor\AbstractRetrieverProcessor;
-use Madj2k\AiAssistantPremium\License\LicenseService;
+use Madj2k\AiAssistantPremium\License\LicenseCheckInterface;
 
 /**
  * Class SearchResultRetrieverProcessor
@@ -51,7 +50,7 @@ final readonly class SearchResultRetrieverProcessor extends AbstractRetrieverPro
      */
     public function __construct(
         private PipelineLoggerInterface $pipelineLogger,
-        private LicenseService $licenseService,
+         private LicenseCheckInterface $licenseService,
     ) {
     }
 
