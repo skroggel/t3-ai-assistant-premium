@@ -122,6 +122,14 @@ final class ShopwareIndexer extends AbstractIndexer implements IndexerInterface
     {
         $this->licenseService->requireValidLicense();
 
+        $this->logger->info('Shopware indexer started.', [
+            'indexer_uid' => $request->getIndexerUid(),
+            'mode' => $request->getOption('mode', 'default'),
+            'limit' => $request->getLimit(),
+            'cursor' => $request->getCursor(),
+            'dry_run' => $request->isDryRun(),
+        ]);
+
         $result = new IndexingResult();
 
         foreach ($this->resolveShopwareConfigurations($request->getIndexerUid()) as $configuration) {
@@ -132,6 +140,17 @@ final class ShopwareIndexer extends AbstractIndexer implements IndexerInterface
 
             $this->indexConfiguration($configuration, $request, $result);
         }
+
+        $this->logger->info('Shopware indexer finished.', [
+            'processed' => $result->getProcessed(),
+            'indexed' => $result->getIndexed(),
+            'skipped' => $result->getSkipped(),
+            'failed' => $result->getFailed(),
+            'removed' => $result->getRemoved(),
+            'chunks' => $result->getChunksTotal(),
+            'next_cursor' => $result->getNextCursor(),
+            'has_more' => $result->hasMore(),
+        ]);
 
         return $result;
     }
@@ -151,6 +170,9 @@ final class ShopwareIndexer extends AbstractIndexer implements IndexerInterface
      */
     private function indexConfiguration(IndexerConfig $configuration, IndexingRequest $request, IndexingResult $result): void
     {
+        $this->logger->debug('Processing Shopware indexer configuration.', [
+            'indexer_uid' => (int)$configuration->getUid(),
+        ]);
         $collection = $this->resolveCollection($configuration, $request->getCollection());
         if ($collection === '') {
             $result->increaseSkipped();
@@ -197,6 +219,11 @@ final class ShopwareIndexer extends AbstractIndexer implements IndexerInterface
 
                 /** @var array<int, mixed> $products */
                 $products = is_array($response['data'] ?? null) ? $response['data'] : [];
+                $this->logger->debug('Processing Shopware product page.', [
+                    'indexer_uid' => (int)$configuration->getUid(),
+                    'page' => $page,
+                    'product_count' => count($products),
+                ]);
                 if ($products === []) {
                     break;
                 }
@@ -224,6 +251,13 @@ final class ShopwareIndexer extends AbstractIndexer implements IndexerInterface
                     }
 
                     $result->increaseProcessed();
+
+                    $this->logger->debug('Processing Shopware product.', [
+                        'indexer_uid' => (int)$configuration->getUid(),
+                        'source_identifier' => $sourceIdentifier,
+                        'updated_at' => $updatedAt,
+                        'active' => $this->isProductActive($product),
+                    ]);
 
                     if (!$this->isProductActive($product)) {
                         $this->removeIndexedProduct($configuration, $collection, $sourceIdentifier, $request, $result);

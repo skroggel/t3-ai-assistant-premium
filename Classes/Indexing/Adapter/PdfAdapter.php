@@ -25,6 +25,9 @@ use Madj2k\AiAssistantPremium\License\LicenseService;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\DTO\PdfExtractedPage;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\DTO\PdfPageExtractionResult;
 use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfDocumentExtractionService;
+use Psr\Log\LoggerInterface;
+use TYPO3\CMS\Core\Log\LogManager;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Class PdfAdapter
@@ -38,6 +41,8 @@ use Madj2k\AiAssistantPremium\Indexing\Pdf\PdfDocumentExtractionService;
  */
 final readonly class PdfAdapter implements AdapterInterface, MultiDocumentAdapterInterface
 {
+    private LoggerInterface $logger;
+
     /**
      * Registry and TypoScript path for the PDF result link behavior.
      *
@@ -54,8 +59,9 @@ final readonly class PdfAdapter implements AdapterInterface, MultiDocumentAdapte
     public function __construct(
         private LicenseService $licenseService,
         private PdfDocumentExtractionService $documentExtractionService,
+        ?LogManager $logManager = null,
     ) {
-
+        $this->logger = ($logManager ?? GeneralUtility::makeInstance(LogManager::class))->getLogger(__CLASS__);
     }
 
 
@@ -90,8 +96,15 @@ final readonly class PdfAdapter implements AdapterInterface, MultiDocumentAdapte
      */
     public function supports(string $path): bool
     {
-        return $this->licenseService->isValid()
+        $supported = $this->licenseService->isValid()
             && strtolower((string)pathinfo($path, PATHINFO_EXTENSION)) === 'pdf';
+        $this->logger->debug('Checked PDF adapter support.', [
+            'extension' => strtolower((string)pathinfo($path, PATHINFO_EXTENSION)),
+            'is_file' => is_file($path),
+            'supported' => $supported,
+        ]);
+
+        return $supported;
     }
 
 
@@ -100,7 +113,7 @@ final readonly class PdfAdapter implements AdapterInterface, MultiDocumentAdapte
      *
      * @param string $path Absolute path to the PDF file.
      * @param \Madj2k\AiCore\DTO\DocumentMetadata $metadata Mutable source metadata.
-     * @return string Normalized text of all PDF pages or an empty string when unavailable.
+     * @return \Madj2k\AiCore\Indexing\DTO\IndexableDocument|null Normalized text of all PDF pages or an empty string when unavailable.
      * @throws \Madj2k\AiCore\Exception\IndexingException If the PDF cannot be parsed or extracted.
      * @throws \TYPO3\CMS\Core\Cache\Exception\NoSuchCacheException If the TYPO3 runtime cache is unavailable.
      */
@@ -133,9 +146,14 @@ final readonly class PdfAdapter implements AdapterInterface, MultiDocumentAdapte
     public function extractDocuments(string $path, DocumentMetadata $metadata): array
     {
         if (!$this->licenseService->isValid() || !is_file($path)) {
+            $this->logger->notice('Skipping PDF extraction.', [
+                'is_file' => is_file($path),
+                'license_valid' => $this->licenseService->isValid(),
+            ]);
             return [];
         }
 
+        $this->logger->debug('Extracting PDF pages.', ['path' => $path]);
         $pdfExtractedPageList = $this->extractPdfPageList($path);
         $pageCount = count($pdfExtractedPageList);
         $documents = [];
@@ -154,6 +172,11 @@ final readonly class PdfAdapter implements AdapterInterface, MultiDocumentAdapte
             );
         }
 
+        $this->logger->info('PDF pages extracted.', [
+            'page_count' => $pageCount,
+            'document_count' => count($documents),
+        ]);
+
         return $documents;
     }
 
@@ -170,6 +193,10 @@ final readonly class PdfAdapter implements AdapterInterface, MultiDocumentAdapte
         try {
             return $this->documentExtractionService->extract($path);
         } catch (\Throwable $exception) {
+            $this->logger->error('PDF text extraction failed.', [
+                'path' => $path,
+                'exception' => $exception,
+            ]);
             throw new IndexingException(
                 'Could not extract text from PDF file.',
                 1780934292,

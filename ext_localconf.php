@@ -13,9 +13,17 @@ defined('TYPO3') or die('Access denied.');
 
 (static function (): void {
     $GLOBALS['TYPO3_CONF_VARS']['LOG']['Madj2k']['AiAssistantPremium']['writerConfiguration'] = [
-        LogLevel::DEBUG => [
+        LogLevel::WARNING => [
             FileWriter::class => [
                 'logFile' => Environment::getVarPath() . '/log/tx_aiassistant_premium.log',
+            ],
+        ],
+    ];
+
+    $GLOBALS['TYPO3_CONF_VARS']['LOG']['Madj2k']['AiAssistantPremium']['Indexing']['writerConfiguration'] = [
+        LogLevel::WARNING => [
+            FileWriter::class => [
+                'logFile' => Environment::getVarPath() . '/log/tx_aiassistant_premium_indexing.log',
             ],
         ],
     ];

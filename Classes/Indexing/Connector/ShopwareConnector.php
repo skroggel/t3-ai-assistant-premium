@@ -170,6 +170,14 @@ readonly class ShopwareConnector implements ShopwareConnectorInterface
     ): array {
         $this->licenseService->requireValidLicense();
 
+        $this->logger->debug('Fetching Shopware products.', [
+            'indexer_uid' => (int)$configuration->getUid(),
+            'page' => $page,
+            'limit' => $limit,
+            'since' => $since->format(DATE_ATOM),
+            'before' => $before?->format(DATE_ATOM),
+        ]);
+
         $baseUrl = $this->resolveBaseUrl($configuration);
         if ($baseUrl === '') {
             return ['data' => [], 'total' => 0];
@@ -251,8 +259,19 @@ readonly class ShopwareConnector implements ShopwareConnectorInterface
 
         $data = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         if (!is_array($data)) {
+            $this->logger->warning('Shopware product response is not an array.', [
+                'indexer_uid' => (int)$configuration->getUid(),
+                'page' => $page,
+            ]);
             return ['data' => [], 'total' => 0];
         }
+
+        $this->logger->debug('Shopware products fetched.', [
+            'indexer_uid' => (int)$configuration->getUid(),
+            'page' => $page,
+            'product_count' => is_array($data['data'] ?? null) ? count($data['data']) : 0,
+            'total' => $data['total'] ?? null,
+        ]);
 
         return $data;
     }
