@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="EXT:ai_assistant/Resources/Private/Language/locallang_tx_aiassistant_assistant_pipeline_step.xlf" date="2026-02-19T11:35:55Z" product-name="ai_assistant">
+		<header/>
+		<body>
+			<trans-unit id="tx_aiassistant_assistant_pipeline_step.max_chunks_per_result" resname="tx_aiassistant_assistant_pipeline_step.max_chunks_per_result">
+				<source>Maximum chunks per result</source>
+			</trans-unit>
+            <trans-unit id="tx_aiassistant_assistant_pipeline_step.max_chunk_characters" resname="tx_aiassistant_assistant_pipeline_step.max_chunk_characters">
+				<source>Maximum chunk characters</source>
+			</trans-unit>
+            <trans-unit id="tx_aiassistant_assistant_pipeline_step.max_chunks_per_result.description" resname="tx_aiassistant_assistant_pipeline_step.max_chunks_per_result.description">
+				<source>Defines the maximum of chunks that will be generated based on one result.</source>
+			</trans-unit>
+            <trans-unit id="tx_aiassistant_assistant_pipeline_step.max_chunk_characters.description" resname="tx_aiassistant_assistant_pipeline_step.max_chunk_characters.description">
+                <source>Defines the maximum number of characters per chunk.</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

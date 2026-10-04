@@ -101,8 +101,10 @@ const build = ({
             ? `${sourceType ? `${sourceType}:` : ''}${sourceUid}`
             : `result:${position + 1}`;
         const scoreValue = readField(row, mapping.score);
-        const score = Number.isFinite(Number(scoreValue))
-            ? Number(scoreValue)
+        const numericScore = Number(scoreValue);
+        const hasScore = scoreValue !== '' && scoreValue !== null && scoreValue !== undefined;
+        const score = hasScore && Number.isFinite(numericScore)
+            ? numericScore
             : Math.max(0, 1 - (position * 0.01));
 
         return {

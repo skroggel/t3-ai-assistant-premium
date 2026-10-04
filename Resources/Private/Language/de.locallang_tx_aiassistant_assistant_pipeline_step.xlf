@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+    <file source-language="en" target-language="de" datatype="plaintext" original="EXT:ai_assistant_premium/Resources/Private/Language/locallang_tx_aiassistant_assistant_pipeline_step.xlf" product-name="ai_assistant_premium">
+        <header/>
+        <body>
+            <trans-unit id="tx_aiassistant_assistant_pipeline_step.max_chunks_per_result" resname="tx_aiassistant_assistant_pipeline_step.max_chunks_per_result">
+                <source>Maximum chunks per result</source>
+                <target>Maximale Ausschnitte pro Treffer</target>
+            </trans-unit>
+            <trans-unit id="tx_aiassistant_assistant_pipeline_step.max_chunk_characters" resname="tx_aiassistant_assistant_pipeline_step.max_chunk_characters">
+                <source>Maximum chunk characters</source>
+                <target>Maximale Zeichenanzahl pro Ausschnitt</target>
+            </trans-unit>
+            <trans-unit id="tx_aiassistant_assistant_pipeline_step.max_chunks_per_result.description" resname="tx_aiassistant_assistant_pipeline_step.max_chunks_per_result.description">
+                <source>Defines the maximum of chunks that will be generated based on one result.</source>
+                <target>Legt die maximale Anzahl an Ausschnitten fest, die aus einem Treffer erzeugt werden.</target>
+            </trans-unit>
+            <trans-unit id="tx_aiassistant_assistant_pipeline_step.max_chunk_characters.description" resname="tx_aiassistant_assistant_pipeline_step.max_chunk_characters.description">
+                <source>Defines the maximum number of characters per chunk.</source>
+                <target>Legt die maximale Zeichenanzahl pro Ausschnitt fest.</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

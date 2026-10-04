@@ -101,7 +101,8 @@ final readonly class SearchResultRetrieverProcessor extends AbstractRetrieverPro
         $payload = $context->getRequest()->getRuntimeSetting('search.capturedResults', []);
         $payload = is_array($payload) ? $payload : [];
         $rows = is_array($payload['results'] ?? null) ? $payload['results'] : [];
-        $documents = $this->mapDocuments($rows, $step);
+        $effectiveQuery = (string)($payload['effectiveQuery'] ?? $context->getCurrentQuery());
+        $documents = $this->mapDocuments($rows, $step, $effectiveQuery);
 
         $this->storeRetrievalGroup(
             $context,
@@ -109,17 +110,12 @@ final readonly class SearchResultRetrieverProcessor extends AbstractRetrieverPro
             self::IDENTIFIER,
             $documents,
             [$payload],
-            (string)($payload['effectiveQuery'] ?? $context->getCurrentQuery()),
-        );
-        $context->getProcessingTrace()->add(
-            'search_result_retriever.completed',
-            $step->getUid(),
-            (string)($payload['effectiveQuery'] ?? $context->getCurrentQuery()),
-            ['result_count' => count($documents), 'total' => (int)($payload['total'] ?? count($documents))],
+            $effectiveQuery,
         );
 
         if ($logContext instanceof PipelineLogMetaData) {
             $this->pipelineLogger->logRetrievalResponse($logContext, $step->getTitle(), self::IDENTIFIER, [
+                'payload' => $payload,
                 'result_count' => count($documents),
                 'total' => (int)($payload['total'] ?? count($documents)),
                 'integration' => (string)($payload['integration'] ?? ''),
@@ -132,13 +128,19 @@ final readonly class SearchResultRetrieverProcessor extends AbstractRetrieverPro
      *
      * @param array<int, mixed> $rows Captured search result rows.
      * @param PipelineStepConfigurationInterface $step Current pipeline step.
+     * @param string $query Effective search query.
      * @return array<int, RetrievalDocument> Normalized retrieval documents.
      */
-    private function mapDocuments(array $rows, PipelineStepConfigurationInterface $step): array
+    private function mapDocuments(
+        array $rows,
+        PipelineStepConfigurationInterface $step,
+        string $query,
+    ): array
     {
         $maximum = max(0, $step->getMaxRetrievalResults());
         $threshold = $step->getScoreThreshold();
         $documents = [];
+        $processedResults = 0;
 
         if ($maximum === 0) {
             return [];
@@ -160,18 +162,103 @@ final readonly class SearchResultRetrieverProcessor extends AbstractRetrieverPro
                 continue;
             }
 
-            $documents[] = new RetrievalDocument(
-                id: $identifier,
-                score: $score,
-                text: $text,
-                documentMetadata: $this->extractMetadata($row, $step, $row),
-            );
+            $excerpts = $this->extractRelevantExcerpts($text, $query, $step);
+            foreach ($excerpts as $index => $excerpt) {
+                $documents[] = new RetrievalDocument(
+                    id: $identifier . '#excerpt-' . ($index + 1),
+                    score: $score,
+                    text: $excerpt,
+                    documentMetadata: $this->extractMetadata($row, $step, $row),
+                );
+            }
 
-            if (count($documents) >= $maximum) {
+            $processedResults++;
+            if ($processedResults >= $maximum) {
                 break;
             }
         }
 
         return $documents;
+    }
+
+    /**
+     * Extracts the best query-focused windows from one search result.
+     *
+     * @return array<int, string>
+     */
+    private function extractRelevantExcerpts(
+        string $text,
+        string $query,
+        PipelineStepConfigurationInterface $step,
+    ): array {
+        $maximumCharacters = $step->getMaxChunkCharacters();
+        $maximumExcerpts = max(1, $step->getMaxChunksPerResult());
+        if ($maximumCharacters <= 0) {
+            return [$text];
+        }
+
+        $terms = array_values(array_unique(array_filter(
+            preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($query)) ?: [],
+            static fn (string $term): bool => mb_strlen($term) > 1,
+        )));
+        if ($terms === []) {
+            return [mb_substr($text, 0, $maximumCharacters)];
+        }
+
+        $textLength = mb_strlen($text);
+        $candidates = [];
+        foreach ($terms as $term) {
+            $offset = 0;
+            while (($position = mb_stripos($text, $term, $offset)) !== false) {
+                $start = max(0, $position - intdiv($maximumCharacters, 2));
+                $excerpt = mb_substr($text, $start, $maximumCharacters);
+                $matchedTerms = 0;
+                foreach ($terms as $candidateTerm) {
+                    if (mb_stripos($excerpt, $candidateTerm) !== false) {
+                        $matchedTerms++;
+                    }
+                }
+                $candidates[] = [
+                    'start' => $start,
+                    'end' => min($textLength, $start + $maximumCharacters),
+                    'score' => $matchedTerms,
+                    'text' => $excerpt,
+                ];
+                $offset = $position + max(1, mb_strlen($term));
+            }
+        }
+
+        if ($candidates === []) {
+            return [mb_substr($text, 0, $maximumCharacters)];
+        }
+
+        usort($candidates, static fn (array $left, array $right): int =>
+            $right['score'] <=> $left['score'] ?: $left['start'] <=> $right['start']
+        );
+
+        $selected = [];
+        foreach ($candidates as $candidate) {
+            $overlaps = false;
+            foreach ($selected as $item) {
+                if ($candidate['start'] < $item['end'] && $candidate['end'] > $item['start']) {
+                    $overlaps = true;
+                    break;
+                }
+            }
+            if ($overlaps) {
+                continue;
+            }
+            $selected[] = $candidate;
+            if (count($selected) >= $maximumExcerpts) {
+                break;
+            }
+        }
+
+        usort($selected, static fn (array $left, array $right): int => $left['start'] <=> $right['start']);
+
+        return array_map(
+            static fn (array $candidate): string => trim($candidate['text']),
+            $selected,
+        );
     }
 }
