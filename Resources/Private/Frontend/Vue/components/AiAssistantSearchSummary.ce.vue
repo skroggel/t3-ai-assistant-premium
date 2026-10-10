@@ -12,6 +12,10 @@
             :auto-query="summaryAnswer ? '' : summaryQuery"
             :initial-message="summaryAnswer"
             :labels-json="labelsJson"
+            :ui-components-json="uiComponentsJson"
+            :error-handling="errorHandling"
+            :include-default-styles="includeDefaultStyles"
+            @error="handleAssistantError"
         ></ai-assistant-chat>
     </section>
 </template>
@@ -31,6 +35,9 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
  * @property {string} settingsJson Serialized runtime settings.
  * @property {string} chatOptionsJson Serialized normalized frontend chat options.
  * @property {string} labelsJson Serialized translated labels for the nested chat.
+ * @property {string} uiComponentsJson Serialized UI component definitions for the nested chat.
+ * @property {string} errorHandling Frontend error handling mode.
+ * @property {boolean|string|number} includeDefaultStyles Whether built-in chat styles are enabled.
  */
 
 /** @type {import('vue').DefineProps<AiAssistantSearchSummaryProps>} */
@@ -50,6 +57,9 @@ const props = defineProps({
 
     // Translated labels for the nested chat.
     labelsJson: { type: String, default: '{}' },
+    uiComponentsJson: { type: String, default: '[]' },
+    errorHandling: { type: String, default: 'default' },
+    includeDefaultStyles: { type: [String, Number, Boolean], default: true },
 });
 
 /** @type {import('vue').Ref<boolean>} Whether captured results are ready. */
@@ -57,6 +67,17 @@ const ready = ref(false);
 const summaryAnswer = ref('');
 const summaryVersion = ref(0);
 const summaryQuery = ref(props.query || '');
+
+/**
+ * Hides a silent summary when the nested chat cannot produce an answer.
+ *
+ * @return {void}
+ */
+const handleAssistantError = () => {
+    if (props.errorHandling === 'silent') {
+        ready.value = false;
+    }
+};
 
 /** @type {import('vue').Ref<string>} Runtime settings enriched with search results. */
 const runtimeSettings = ref(props.settingsJson || '{}');

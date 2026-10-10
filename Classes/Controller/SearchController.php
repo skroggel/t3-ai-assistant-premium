@@ -18,6 +18,7 @@ namespace Madj2k\AiAssistantPremium\Controller;
 use Madj2k\AiAssistant\Controller\AbstractController as AiAssistantAbstractController;
 use Madj2k\AiAssistant\Assistant\Domain\Repository\AssistantProfileRepository;
 use Madj2k\AiAssistant\Assistant\Frontend\ChatOptionsResolver;
+use Madj2k\AiAssistant\Assistant\UIComponents\Provider as UiComponentProvider;
 use Madj2k\AiAssistantPremium\License\LicenseService;
 use Madj2k\AiAssistantPremium\Search\Middleware\SearchQueryMiddleware;
 use Madj2k\AiAssistant\Assistant\Service\FrontendRequestTokenService;
@@ -51,6 +52,7 @@ class SearchController extends AiAssistantAbstractController
         AssistantProfileRepository $assistantProfileRepository,
         private readonly LicenseService $licenseService,
         private readonly ChatOptionsResolver $chatOptionsResolver,
+        private readonly UiComponentProvider $uiComponentProvider,
         private readonly LoggerInterface $logger,
         FrontendRequestTokenService $requestTokenService,
     ) {
@@ -104,6 +106,7 @@ class SearchController extends AiAssistantAbstractController
         $chatOptions = $this->chatOptionsResolver->resolve($this->settings, $this->resolveSiteLanguage());
         $assistantProfile = (int)($this->settings['assistantProfile'] ?? 0);
         $this->logDisallowedAssistantProfile($assistantProfile);
+        $profile = $this->assistantProfileRepository->findByUid($assistantProfile);
         $this->view->assignMultiple([
             'pageUid' => $this->getCurrentPageUid(),
             'chatIdentifier' => $chatIdentifier,
@@ -115,6 +118,11 @@ class SearchController extends AiAssistantAbstractController
                 $this->chatOptionsResolver->toFrontendOptions($chatOptions, $this->settings)
             ),
             'labelsJson' => $this->jsonEncodeSettings($this->getFrontendLabels()),
+            'uiComponentsJson' => $this->jsonEncodeSettings(array_map(
+                static fn (\Madj2k\AiCore\Assistant\UIComponents\Definition $definition): array => $definition->toArray(),
+                $this->uiComponentProvider->getDefinitionsForProfile($assistantProfile),
+            )),
+            'errorHandling' => $profile?->getErrorHandling() ?? 'default',
             'requestToken' => $this->createRequestToken(
                 $assistantProfile,
                 $chatIdentifier,

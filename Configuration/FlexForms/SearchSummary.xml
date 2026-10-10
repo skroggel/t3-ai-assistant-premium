@@ -39,7 +39,15 @@
 							</items>
 							<foreign_table_where> AND {#tx_aiassistant_assistant_profile}.{#hidden}=0 AND {#tx_aiassistant_assistant_profile}.{#deleted}=0</foreign_table_where>
 						</config>
-					</settings.assistantProfile>
+                    </settings.assistantProfile>
+                    <settings.includeDefaultStyles>
+                        <label>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.include_default_styles</label>
+                        <description>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.include_default_styles.description</description>
+                        <config>
+                            <type>check</type>
+                            <default>1</default>
+                        </config>
+                    </settings.includeDefaultStyles>
 				</el>
 			</ROOT>
 		</sDEF>

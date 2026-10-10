@@ -15,6 +15,7 @@ return [
         ],
         'searchFields' => 'connector_uid,indexer_uid,cursor_source_id,cleanup_cursor_source_id,status',
         'iconfile' => 'EXT:ai_assistant/Resources/Public/Icons/Extension.svg',
+        'hideTable' => true
     ],
     'types' => [
         '1' => [

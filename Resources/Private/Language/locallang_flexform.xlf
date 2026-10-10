@@ -20,6 +20,12 @@
 			<trans-unit id="flexform.search.summary_profile">
 				<source>Search summary profile</source>
 			</trans-unit>
+			<trans-unit id="flexform.search.include_default_styles">
+				<source>Include default chat styles</source>
+			</trans-unit>
+			<trans-unit id="flexform.search.include_default_styles.description">
+				<source>Includes the built-in chat component CSS. Disable this when the host project provides its own styles.</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>
