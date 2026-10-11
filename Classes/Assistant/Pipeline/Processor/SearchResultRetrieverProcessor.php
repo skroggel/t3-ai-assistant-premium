@@ -73,6 +73,12 @@ final readonly class SearchResultRetrieverProcessor extends AbstractRetrieverPro
      */
     public function canProcess(Context $context, PipelineStepConfigurationInterface $step): bool
     {
+        if (method_exists($step, 'getRetrievalIdentifier')
+            && !$context->getRetrievalPlan()->allows((string)$step->getRetrievalIdentifier())
+        ) {
+            return false;
+        }
+
         if (!$this->licenseService->isValid()) {
             return false;
         }

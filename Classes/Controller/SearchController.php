@@ -111,7 +111,7 @@ class SearchController extends AiAssistantAbstractController
             'pageUid' => $this->getCurrentPageUid(),
             'chatIdentifier' => $chatIdentifier,
             'integration' => (string)($this->settings['integration'] ?? 'ke_search'),
-            'searchString' => trim((string)($metadata['originalQuery'] ?? '')),
+            'searchString' => $this->resolveOriginalSearchQuery($metadata),
             'startTimestamp' => time(),
             'settingsJson' => $this->jsonEncodeSettings($this->settings),
             'chatOptionsJson' => $this->jsonEncodeSettings(
@@ -192,6 +192,30 @@ class SearchController extends AiAssistantAbstractController
         $metadata = $request?->getQueryParams()[SearchQueryMiddleware::CONTROL_PARAMETER] ?? [];
 
         return is_array($metadata) ? $metadata : [];
+    }
+
+    /**
+     * Resolves the original search query, including requests without results.
+     *
+     * @param array<string,mixed> $metadata Search middleware metadata.
+     * @return string Original search query.
+     */
+    private function resolveOriginalSearchQuery(array $metadata): string
+    {
+        $originalQuery = trim((string)($metadata['originalQuery'] ?? ''));
+        if ($originalQuery !== '') {
+            return $originalQuery;
+        }
+
+        $queryParameters = $this->resolveServerRequest()?->getQueryParams() ?? [];
+        foreach (['tx_kesearch_pi1', 'tx_solr'] as $namespace) {
+            $query = $queryParameters[$namespace]['sword'] ?? $queryParameters[$namespace]['q'] ?? '';
+            if (is_scalar($query) && trim((string)$query) !== '') {
+                return trim((string)$query);
+            }
+        }
+
+        return '';
     }
 
 

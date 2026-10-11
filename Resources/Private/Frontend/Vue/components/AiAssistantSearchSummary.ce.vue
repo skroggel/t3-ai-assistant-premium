@@ -38,6 +38,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
  * @property {string} uiComponentsJson Serialized UI component definitions for the nested chat.
  * @property {string} errorHandling Frontend error handling mode.
  * @property {boolean|string|number} includeDefaultStyles Whether built-in chat styles are enabled.
+ * @property {boolean|string|number} showWithoutResults Whether to run the summary without search results.
  */
 
 /** @type {import('vue').DefineProps<AiAssistantSearchSummaryProps>} */
@@ -60,6 +61,7 @@ const props = defineProps({
     uiComponentsJson: { type: String, default: '[]' },
     errorHandling: { type: String, default: 'default' },
     includeDefaultStyles: { type: [String, Number, Boolean], default: true },
+    showWithoutResults: { type: [String, Number, Boolean], default: false },
 });
 
 /** @type {import('vue').Ref<boolean>} Whether captured results are ready. */
@@ -67,6 +69,13 @@ const ready = ref(false);
 const summaryAnswer = ref('');
 const summaryVersion = ref(0);
 const summaryQuery = ref(props.query || '');
+
+const toBoolean = (value) => {
+    if (typeof value === 'string') {
+        return ['true', '1'].includes(value.trim().toLowerCase());
+    }
+    return value === true || value === 1;
+};
 
 /**
  * Hides a silent summary when the nested chat cannot produce an answer.
@@ -172,9 +181,12 @@ const summarize = async (options = {}) => {
         fields: options.fields || {},
         total: options.total,
     });
+    if (!toBoolean(props.showWithoutResults) && payload.results.length === 0) {
+        return { context: { currentQuery: summaryQuery.value } };
+    }
     settings.search.capturedResults = addPayloadContext(payload, options);
     runtimeSettings.value = JSON.stringify(settings);
-    summaryQuery.value = options.effectiveQuery || options.originalQuery || props.query || '';
+    summaryQuery.value = options.originalQuery || props.query || '';
     ready.value = true;
     return { context: { currentQuery: summaryQuery.value } };
 };
@@ -192,8 +204,11 @@ const consumeCapturedResults = (capturedResults, context = {}) => {
         || typeof capturedResults !== 'object'
         || Array.isArray(capturedResults)
         || !Array.isArray(capturedResults.results)
-        || capturedResults.results.length === 0
     ) {
+        return false;
+    }
+
+    if (!toBoolean(props.showWithoutResults) && capturedResults.results.length === 0) {
         return false;
     }
 
@@ -221,7 +236,7 @@ const consumeCapturedResults = (capturedResults, context = {}) => {
     });
     settings.search.capturedResults = capturedPayload;
     runtimeSettings.value = JSON.stringify(settings);
-    summaryQuery.value = capturedPayload.effectiveQuery || capturedPayload.originalQuery || props.query || '';
+    summaryQuery.value = capturedPayload.originalQuery || props.query || '';
     ready.value = true;
     return true;
 };

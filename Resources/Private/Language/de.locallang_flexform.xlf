@@ -34,6 +34,14 @@
                 <source>Includes the built-in chat component CSS. Disable this when the host project provides its own styles.</source>
                 <target>Bindet das integrierte CSS der Chat-Komponenten ein. Deaktivieren, wenn das Host-Projekt eigene Styles bereitstellt.</target>
             </trans-unit>
+            <trans-unit id="flexform.search.show_without_results">
+                <source>Show summary without search results</source>
+                <target>Zusammenfassung auch ohne Suchergebnisse anzeigen</target>
+            </trans-unit>
+            <trans-unit id="flexform.search.show_without_results.description">
+                <source>Runs the AI summary even when the search returns no results.</source>
+                <target>Führt die KI-Zusammenfassung auch aus, wenn die Suche keine Ergebnisse liefert.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

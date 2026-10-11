@@ -48,6 +48,14 @@
                             <default>1</default>
                         </config>
                     </settings.includeDefaultStyles>
+                    <settings.showWithoutResults>
+                        <label>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.show_without_results</label>
+                        <description>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.show_without_results.description</description>
+                        <config>
+                            <type>check</type>
+                            <default>0</default>
+                        </config>
+                    </settings.showWithoutResults>
 				</el>
 			</ROOT>
 		</sDEF>

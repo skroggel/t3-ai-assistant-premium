@@ -166,9 +166,7 @@ onMounted(() => {
     window.dispatchEvent(new CustomEvent(readyEventName));
 
     const rows = getInitialRows();
-    if (rows.length > 0) {
-        emittedPayload = publish({ rows });
-    }
+    emittedPayload = publish({ rows });
 });
 
 onBeforeUnmount(() => {
