@@ -161,7 +161,7 @@ class SearchController extends AiAssistantAbstractController
             'errorMessage' => 'templates_index_index.error_message',
             'chatLabel' => 'templates_index_index.chat_history',
             'userLabel' => 'templates_index_index.user_label',
-            'assistantLabel' => 'templates_index_index.assistant_label',
+            'assistantName' => 'templates_index_index.assistant_name',
             'consentMessage' => 'templates_index_index.consent_message',
             'consentLabel' => 'templates_index_index.consent_button',
             'inputPlaceholder' => 'templates_index_index.input_placeholder',

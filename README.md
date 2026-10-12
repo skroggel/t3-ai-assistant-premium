@@ -30,6 +30,11 @@ docker run --rm --pull always -v "$(pwd)":/project -it ghcr.io/typo3-documentati
 ```
 
 ## Build the frontend bundles with DDEV
+Install npm from the project root:
+
+```bash
+ddev exec sh -lc 'cd /var/www/html/vendor/madj2k/t3-ai-assistant-premium && npm install'
+```
 
 Run the Premium bundle build from the project root:
 
