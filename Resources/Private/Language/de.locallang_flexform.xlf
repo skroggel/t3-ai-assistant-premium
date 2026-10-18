@@ -42,6 +42,21 @@
                 <source>Runs the AI summary even when the search returns no results.</source>
                 <target>Führt die KI-Zusammenfassung auch aus, wenn die Suche keine Ergebnisse liefert.</target>
             </trans-unit>
+            <trans-unit id="flexform.search.number_of_typing_dots">
+                <source>Number of typing dots</source>
+                <target>Anzahl der Typing-Dots</target>
+            </trans-unit>
+            <trans-unit id="flexform.search.number_of_typing_dots.description">
+                <source>Number of dots shown while the assistant is generating a response.</source>
+                <target>Anzahl der Punkte, die während der Antwortgenerierung angezeigt werden.</target>
+            </trans-unit>
+            <trans-unit id="flexform.search.sheet.advanced"><source>Advanced</source><target>Erweitert</target></trans-unit>
+            <trans-unit id="flexform.search.render_lag_characters"><source>Render lag (characters)</source><target>Render-Verzögerung (Zeichen)</target></trans-unit>
+            <trans-unit id="flexform.search.render_lag_characters.description"><source>Number of streamed characters kept ahead of the visual renderer.</source><target>Anzahl der Zeichen, um die die Darstellung dem Stream voraus bleibt.</target></trans-unit>
+            <trans-unit id="flexform.search.render_chunk_characters"><source>Render chunk size (characters)</source><target>Render-Schrittgröße (Zeichen)</target></trans-unit>
+            <trans-unit id="flexform.search.render_chunk_characters.description"><source>Number of characters rendered per visual catch-up step.</source><target>Anzahl der Zeichen pro sichtbarem Aufholschritt.</target></trans-unit>
+            <trans-unit id="flexform.search.initial_message_delay"><source>Initial message delay (milliseconds)</source><target>Verzögerung der Anfangsnachricht (Millisekunden)</target></trans-unit>
+            <trans-unit id="flexform.search.response_message_delay"><source>Response message delay (milliseconds)</source><target>Verzögerung der Antwort (Millisekunden)</target></trans-unit>
         </body>
     </file>
 </xliff>

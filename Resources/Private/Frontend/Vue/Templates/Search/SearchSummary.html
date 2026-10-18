@@ -16,6 +16,10 @@
         src="EXT:ai_assistant_premium/Resources/Public/JavaScript/ai-assistant-premium.js"
     />
 
+    <f:if condition="{settings.includeDefaultStyles}">
+        <f:asset.css identifier="ai-assistant-chat-css" href="EXT:ai_assistant/Resources/Public/Css/t3-ai-assistant-frontend.css" />
+    </f:if>
+
     <ai-assistant-search-summary
         sse-endpoint="{f:uri.action(action: 'stream', controller: 'Chat', extensionName: 'AiAssistant', pluginName: 'Chat', pageType: '1790831370', arguments: '{id: pageUid}')}"
         query="{searchString -> f:format.htmlspecialchars()}"
@@ -29,7 +33,6 @@
         labels-json="{labelsJson -> f:format.htmlspecialchars()}"
         ui-components-json="{uiComponentsJson -> f:format.htmlspecialchars()}"
         error-handling="{errorHandling}"
-        include-default-styles="{settings.includeDefaultStyles}"
         show-without-results="{settings.showWithoutResults}"
     ></ai-assistant-search-summary>
 </html>

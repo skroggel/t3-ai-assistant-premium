@@ -18,7 +18,7 @@ namespace Madj2k\AiAssistantPremium\Controller;
 use Madj2k\AiAssistant\Controller\AbstractController as AiAssistantAbstractController;
 use Madj2k\AiAssistant\Assistant\Domain\Repository\AssistantProfileRepository;
 use Madj2k\AiAssistant\Assistant\Frontend\ChatOptionsResolver;
-use Madj2k\AiAssistant\Assistant\UIComponents\Provider as UiComponentProvider;
+use Madj2k\AiAssistant\Assistant\Presentation\UIComponents\UIComponentProvider as UiComponentProvider;
 use Madj2k\AiAssistantPremium\License\LicenseService;
 use Madj2k\AiAssistantPremium\Search\Middleware\SearchQueryMiddleware;
 use Madj2k\AiAssistant\Assistant\Service\FrontendRequestTokenService;
@@ -119,7 +119,7 @@ class SearchController extends AiAssistantAbstractController
             ),
             'labelsJson' => $this->jsonEncodeSettings($this->getFrontendLabels()),
             'uiComponentsJson' => $this->jsonEncodeSettings(array_map(
-                static fn (\Madj2k\AiCore\Assistant\UIComponents\Definition $definition): array => $definition->toArray(),
+                static fn (\Madj2k\AiCore\Assistant\Presentation\UIComponents\Definition $definition): array => $definition->toArray(),
                 $this->uiComponentProvider->getDefinitionsForProfile($assistantProfile),
             )),
             'errorHandling' => $profile?->getErrorHandling() ?? 'default',

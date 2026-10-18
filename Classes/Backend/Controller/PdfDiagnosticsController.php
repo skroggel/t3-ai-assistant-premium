@@ -122,11 +122,11 @@ final readonly class PdfDiagnosticsController
             ->addStyleSheet('aiassistant-backend', 'EXT:ai_assistant/Resources/Public/Styles/Backend.css')
             ->addStyleSheet(
                 'aiassistant-premium-pdf-diagnostics',
-                'EXT:ai_assistant_premium/Resources/Public/Styles/PdfDiagnostics.css',
+                'EXT:ai_assistant_premium/Resources/Public/Css/pdf-diagnostics.css',
             )
             ->addJavaScript(
                 'aiassistant-premium-pdf-diagnostics',
-                'EXT:ai_assistant_premium/Resources/Public/JavaScript/PdfDiagnostics.js',
+                'EXT:ai_assistant_premium/Resources/Public/JavaScript/pdf-diagnostics.js',
                 ['defer' => 'defer'],
             );
 

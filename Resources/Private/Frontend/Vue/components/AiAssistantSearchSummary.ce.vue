@@ -14,7 +14,6 @@
             :labels-json="labelsJson"
             :ui-components-json="uiComponentsJson"
             :error-handling="errorHandling"
-            :include-default-styles="includeDefaultStyles"
             @error="handleAssistantError"
         ></ai-assistant-chat>
     </section>
@@ -37,7 +36,6 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
  * @property {string} labelsJson Serialized translated labels for the nested chat.
  * @property {string} uiComponentsJson Serialized UI component definitions for the nested chat.
  * @property {string} errorHandling Frontend error handling mode.
- * @property {boolean|string|number} includeDefaultStyles Whether built-in chat styles are enabled.
  * @property {boolean|string|number} showWithoutResults Whether to run the summary without search results.
  */
 
@@ -60,7 +58,6 @@ const props = defineProps({
     labelsJson: { type: String, default: '{}' },
     uiComponentsJson: { type: String, default: '[]' },
     errorHandling: { type: String, default: 'default' },
-    includeDefaultStyles: { type: [String, Number, Boolean], default: true },
     showWithoutResults: { type: [String, Number, Boolean], default: false },
 });
 

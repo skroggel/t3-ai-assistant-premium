@@ -32,6 +32,19 @@
             <trans-unit id="flexform.search.show_without_results.description">
                 <source>Runs the AI summary even when the search returns no results.</source>
             </trans-unit>
+            <trans-unit id="flexform.search.number_of_typing_dots">
+                <source>Number of typing dots</source>
+            </trans-unit>
+            <trans-unit id="flexform.search.number_of_typing_dots.description">
+                <source>Number of dots shown while the assistant is generating a response.</source>
+            </trans-unit>
+            <trans-unit id="flexform.search.sheet.advanced"><source>Advanced</source></trans-unit>
+            <trans-unit id="flexform.search.render_lag_characters"><source>Render lag (characters)</source></trans-unit>
+            <trans-unit id="flexform.search.render_lag_characters.description"><source>Number of streamed characters kept ahead of the visual renderer.</source></trans-unit>
+            <trans-unit id="flexform.search.render_chunk_characters"><source>Render chunk size (characters)</source></trans-unit>
+            <trans-unit id="flexform.search.render_chunk_characters.description"><source>Number of characters rendered per visual catch-up step.</source></trans-unit>
+            <trans-unit id="flexform.search.initial_message_delay"><source>Initial message delay (milliseconds)</source></trans-unit>
+            <trans-unit id="flexform.search.response_message_delay"><source>Response message delay (milliseconds)</source></trans-unit>
 		</body>
 	</file>
 </xliff>
