@@ -1,3 +1,3 @@
 aiAssistantPremium:
   # Use the classic Fluid/KeSearch template integration by default.
-  useClassicalSearch: true
+  useClassicalSearch: 1
