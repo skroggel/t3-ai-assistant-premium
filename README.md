@@ -13,7 +13,7 @@ through the Core Orchestrator.
 See the documentation for:
 
 - [Search integration](Documentation/Features/SearchIntegration.rst)
-- [Generic JSON controller](Documentation/Developer/JsonController.rst)
+- [Generic JSON controller](../ai-assistant/Documentation/Developers/Architecture/JsonController.rst)
 
 ## License
 

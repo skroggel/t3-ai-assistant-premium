@@ -38,8 +38,18 @@
 								</numIndex>
 							</items>
 							<foreign_table_where> AND {#tx_aiassistant_assistant_profile}.{#hidden}=0 AND {#tx_aiassistant_assistant_profile}.{#deleted}=0</foreign_table_where>
-						</config>
+                        </config>
                     </settings.assistantProfile>
+                    <settings.elementId>
+                        <label>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.element_id</label>
+                        <description>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.element_id.description</description>
+                        <config>
+                            <type>input</type>
+                            <size>40</size>
+                            <max>255</max>
+                            <eval>trim</eval>
+                        </config>
+                    </settings.elementId>
                     <settings.includeDefaultStyles>
                         <label>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.include_default_styles</label>
                         <description>LLL:EXT:ai_assistant_premium/Resources/Private/Language/locallang_flexform.xlf:flexform.search.include_default_styles.description</description>

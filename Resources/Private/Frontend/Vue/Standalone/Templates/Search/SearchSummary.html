@@ -6,10 +6,11 @@
         src="EXT:ai_assistant/Resources/Public/JavaScript/ai-assistant-transport.js"
     />
 
-    <f:asset.script
-        identifier="ai-assistant-chat-vue"
-        src="EXT:ai_assistant/Resources/Public/JavaScript/ai-assistant-chat.js"
-    />
+    <!--
+        AiAssistantChat is bundled into ai-assistant-premium.js through the
+        standard Vue Summary component. The standalone Core custom-element
+        bundle is only needed for a separate <ai-assistant-chat> instance.
+    -->
 
     <f:asset.script
         identifier="ai-assistant-premium-vue"

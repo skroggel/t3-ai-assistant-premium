@@ -1,7 +1,7 @@
 <template>
     <section v-if="ready" class="aiassistant-summary-container">
-        <ai-assistant-chat
-            :key="summaryVersion"
+        <component
+            :is="resolvedChatComponent"
             :endpoint="streamResponse ? sseEndpoint : jsonEndpoint"
             :stream-response="streamResponse"
             :assistant-profile="assistantProfile"
@@ -10,76 +10,50 @@
             :start-timestamp="startTimestamp"
             :settings-json="runtimeSettings"
             :chat-options-json="chatOptionsJson"
-            :auto-query="summaryAnswer ? '' : summaryQuery"
+            :auto-query="summaryAnswer ? '' : (summaryQuery || query)"
             :initial-message="summaryAnswer"
             :labels-json="labelsJson"
             :ui-components-json="uiComponentsJson"
             :error-handling="errorHandling"
             @error="handleAssistantError"
-        ></ai-assistant-chat>
+        />
     </section>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-/**
- * @typedef {Object} AiAssistantSearchSummaryProps
- * @property {string} sseEndpoint AI Assistant SSE endpoint for follow-up messages.
- * @property {string} jsonEndpoint Premium JSON endpoint for complete responses.
- * @property {string} integration Search integration identifier.
- * @property {string} query Original search query used for the summary.
- * @property {string|number} assistantProfile Assistant profile uid.
- * @property {string} chatIdentifier Stable search/chat identifier.
- * @property {string} requestToken Signed frontend request token.
- * @property {string|number} startTimestamp Session reset timestamp.
- * @property {string} settingsJson Serialized runtime settings.
- * @property {string} chatOptionsJson Serialized normalized frontend chat options.
- * @property {string} labelsJson Serialized translated labels for the nested chat.
- * @property {string} uiComponentsJson Serialized UI component definitions for the nested chat.
- * @property {string} errorHandling Frontend error handling mode.
- * @property {boolean|string|number} showWithoutResults Whether to run the summary without search results.
- * @property {boolean|string|number} streamResponse Whether to stream the assistant response.
- */
+import { summaryProps } from '../summaryProps.js';
 
-/** @type {import('vue').DefineProps<AiAssistantSearchSummaryProps>} */
-const props = defineProps({
-    // Request identity and search context.
-    sseEndpoint: { type: String, default: '' },
-    jsonEndpoint: { type: String, default: '' },
-    integration: { type: String, default: 'ke_search' },
-    query: { type: String, default: '' },
-    assistantProfile: { type: [String, Number], default: 0 },
-    chatIdentifier: { type: String, default: '' },
-    requestToken: { type: String, default: '' },
-    startTimestamp: { type: [String, Number], default: 0 },
-
-    // Runtime settings passed to the nested assistant chat.
-    settingsJson: { type: String, default: '{}' },
-    chatOptionsJson: { type: String, default: '{}' },
-
-    // Translated labels for the nested chat.
-    labelsJson: { type: String, default: '{}' },
-    uiComponentsJson: { type: String, default: '[]' },
-    errorHandling: { type: String, default: 'default' },
-    showWithoutResults: { type: [String, Number, Boolean], default: false },
-    streamResponse: { type: [String, Number, Boolean], default: true },
-});
-
+const props = defineProps(summaryProps);
 /** @type {import('vue').Ref<boolean>} Whether captured results are ready. */
 const ready = ref(false);
+/** @type {import('vue').Ref<string>} Summary answer available for initial chat content. */
 const summaryAnswer = ref('');
-const summaryVersion = ref(0);
+/** @type {import('vue').Ref<string>} Current summary query. */
 const summaryQuery = ref(props.query || '');
+/** @type {import('vue').Ref<string>} Runtime settings enriched with search results. */
+const runtimeSettings = ref(props.settingsJson || '{}');
 
 const toBoolean = (value) => {
-    if (typeof value === 'string') {
-        return ['true', '1'].includes(value.trim().toLowerCase());
-    }
+    if (typeof value === 'string') return ['true', '1'].includes(value.trim().toLowerCase());
     return value === true || value === 1;
 };
-
 const streamResponse = toBoolean(props.streamResponse);
+const hasDirectIntegration = computed(() => (
+    Boolean(props.chatComponent) || Boolean(props.capturedResults)
+));
+/**
+ * Loads the standard chat only when no custom chat component was supplied.
+ *
+ * This keeps the Integration bundle free from the standard chat code when a
+ * site provides its own `chatComponent`, while the regular Vue Summary still
+ * gets the standard chat by default.
+ */
+const defaultChatComponent = defineAsyncComponent(() => import(
+    '../../../../../../../t3-ai-assistant/Resources/Private/Frontend/Vue/Src/components/AiAssistantChat.vue'
+));
+const resolvedChatComponent = computed(() => props.chatComponent || defaultChatComponent);
 
 /**
  * Hides a silent summary when the nested chat cannot produce an answer.
@@ -87,15 +61,19 @@ const streamResponse = toBoolean(props.streamResponse);
  * @return {void}
  */
 const handleAssistantError = () => {
-    if (props.errorHandling === 'silent') {
-        ready.value = false;
-    }
+    if (props.errorHandling === 'silent') ready.value = false;
 };
 
-/** @type {import('vue').Ref<string>} Runtime settings enriched with search results. */
-const runtimeSettings = ref(props.settingsJson || '{}');
-
 let api = null;
+let lastCapturedResultsSignature = '';
+
+const getCapturedResultsSignature = (capturedResults) => {
+    try {
+        return JSON.stringify(capturedResults);
+    } catch (error) {
+        return '';
+    }
+};
 
 /**
  * Resolves the shared frontend payload builder.
@@ -151,8 +129,37 @@ const addPayloadContext = (payload, options = {}) => {
     };
 };
 
+/** @return {Record<string, any>} Parsed runtime settings. */
+const parseSettings = () => {
+    try {
+        const parsed = JSON.parse(props.settingsJson || '{}');
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch (error) {
+        return {};
+    }
+};
+
 /**
- * Runs the normalized search results through the complete assistant turn.
+ * Stores captured results in the runtime settings used by the nested chat.
+ *
+ * @param {Object} payload Normalized result payload.
+ * @param {Object} options Current search context.
+ * @return {void}
+ */
+const applyPayload = (payload, options = {}) => {
+    const settings = parseSettings();
+    settings.search = settings.search && typeof settings.search === 'object' && !Array.isArray(settings.search)
+        ? settings.search
+        : {};
+    const capturedPayload = addPayloadContext(payload, options);
+    settings.search.capturedResults = capturedPayload;
+    runtimeSettings.value = JSON.stringify(settings);
+    summaryQuery.value = capturedPayload.originalQuery || props.query || '';
+    ready.value = true;
+};
+
+/**
+ * Runs normalized search results through the complete assistant turn.
  *
  * @param {Object} options Search result and query data.
  * @return {Promise<Record<string, any>>} Assistant response.
@@ -160,26 +167,9 @@ const addPayloadContext = (payload, options = {}) => {
 const summarize = async (options = {}) => {
     ready.value = false;
     summaryAnswer.value = '';
-    summaryVersion.value += 1;
-
+    lastCapturedResultsSignature = '';
     const payloadBuilder = await getPayloadBuilder();
-    if (!payloadBuilder?.build) {
-        throw new Error('The search payload builder is not available.');
-    }
-
-    let settings = {};
-    try {
-        const parsedSettings = JSON.parse(props.settingsJson || '{}');
-        settings = parsedSettings && typeof parsedSettings === 'object' && !Array.isArray(parsedSettings)
-            ? parsedSettings
-            : {};
-    } catch (error) {
-        settings = {};
-    }
-
-    settings.search = settings.search && typeof settings.search === 'object' && !Array.isArray(settings.search)
-        ? settings.search
-        : {};
+    if (!payloadBuilder?.build) throw new Error('The search payload builder is not available.');
     const payload = payloadBuilder.build({
         rows: Array.isArray(options.payload) ? options.payload : [],
         fields: options.fields || {},
@@ -188,10 +178,7 @@ const summarize = async (options = {}) => {
     if (!toBoolean(props.showWithoutResults) && payload.results.length === 0) {
         return { context: { currentQuery: summaryQuery.value } };
     }
-    settings.search.capturedResults = addPayloadContext(payload, options);
-    runtimeSettings.value = JSON.stringify(settings);
-    summaryQuery.value = options.originalQuery || props.query || '';
-    ready.value = true;
+    applyPayload(payload, options);
     return { context: { currentQuery: summaryQuery.value } };
 };
 
@@ -208,69 +195,64 @@ const consumeCapturedResults = (capturedResults, context = {}) => {
         || typeof capturedResults !== 'object'
         || Array.isArray(capturedResults)
         || !Array.isArray(capturedResults.results)
-    ) {
-        return false;
-    }
+    ) return false;
+    if (!toBoolean(props.showWithoutResults) && capturedResults.results.length === 0) return false;
 
-    if (!toBoolean(props.showWithoutResults) && capturedResults.results.length === 0) {
-        return false;
+    const signature = getCapturedResultsSignature(capturedResults);
+    if (signature !== '' && signature === lastCapturedResultsSignature) {
+        return true;
     }
+    lastCapturedResultsSignature = signature;
 
     ready.value = false;
     summaryAnswer.value = '';
-    summaryVersion.value += 1;
-
-    let settings = {};
-    try {
-        const parsedSettings = JSON.parse(props.settingsJson || '{}');
-        settings = parsedSettings && typeof parsedSettings === 'object' && !Array.isArray(parsedSettings)
-            ? parsedSettings
-            : {};
-    } catch (error) {
-        settings = {};
-    }
-
-    settings.search = settings.search && typeof settings.search === 'object' && !Array.isArray(settings.search)
-        ? settings.search
-        : {};
-    const capturedPayload = addPayloadContext(capturedResults, {
+    applyPayload(capturedResults, {
         originalQuery: context.originalQuery || capturedResults.originalQuery || props.query,
         effectiveQuery: context.effectiveQuery || capturedResults.effectiveQuery || props.query,
         total: capturedResults.total,
     });
-    settings.search.capturedResults = capturedPayload;
-    runtimeSettings.value = JSON.stringify(settings);
-    summaryQuery.value = capturedPayload.originalQuery || props.query || '';
-    ready.value = true;
     return true;
 };
 
-/**
- * Mounted
- */
+watch(
+    () => props.capturedResults,
+    (capturedResults) => {
+        if (!capturedResults) return;
+        consumeCapturedResults(capturedResults, {
+            originalQuery: capturedResults.originalQuery || props.query,
+            effectiveQuery: capturedResults.effectiveQuery || props.query,
+            total: capturedResults.total,
+        });
+    },
+    { immediate: true },
+);
+
+/** Mounted. */
 onMounted(() => {
     api = { summarize };
     window.AiAssistantPremiumSearchSummary = api;
     window.dispatchEvent(new CustomEvent('ai-assistant-premium-search-summary-ready'));
     const handlePayload = (event) => {
+        if (hasDirectIntegration.value) return;
         const detail = event.detail || {};
         const payload = detail.payload || detail;
         const context = detail.context || window.AiAssistantPremiumSearchContext || {};
         consumeCapturedResults(payload, context);
     };
-    window.addEventListener('ai-assistant-search-payload-ready', handlePayload);
-    consumeCapturedResults(
-        window.AiAssistantPremiumSearchPayload,
-        window.AiAssistantPremiumSearchContext || {},
-    );
+    if (!hasDirectIntegration.value) {
+        window.addEventListener('ai-assistant-search-payload-ready', handlePayload);
+        const consumePublishedPayload = () => consumeCapturedResults(
+            window.AiAssistantPremiumSearchPayload,
+            window.AiAssistantPremiumSearchContext || {},
+        );
+        consumePublishedPayload();
+        window.setTimeout(consumePublishedPayload, 0);
+        window.setTimeout(consumePublishedPayload, 100);
+    }
     api.handlePayload = handlePayload;
 });
 
-/**
- * Disconnects the payload observer when the custom element is removed.
- *
- * @return {void}
- */
+/** Disconnects the payload observer when the custom element is removed. */
 onBeforeUnmount(() => {
     if (api?.handlePayload) {
         window.removeEventListener('ai-assistant-search-payload-ready', api.handlePayload);

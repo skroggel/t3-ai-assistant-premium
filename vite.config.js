@@ -7,7 +7,7 @@ export default defineConfig({
     },
     build: {
         lib: {
-            entry: 'Resources/Private/Frontend/Vue/ai-assistant-premium.js',
+            entry: 'Resources/Private/Frontend/Vue/Src/ai-assistant-premium.js',
             formats: ['iife'],
             name: 'AiAssistantPremiumElements',
             fileName: () => 'JavaScript/ai-assistant-premium.js',

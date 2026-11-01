@@ -1,7 +1,7 @@
 plugin.tx_aiassistantpremium {
     view {
-        templateRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Frontend/Vue/Templates/
-        templateRootPaths.10 = {$plugin.tx_aiassistantpremium.view.templateRootPath}
+        templateRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Frontend/Vue/Standalone/Templates/
+        templateRootPaths.1 = {$plugin.tx_aiassistantpremium.view.templateRootPath}
 
         partialRootPaths.0 = EXT:ai_assistant_premium/Resources/Private/Frontend/Vue/Partials/
         partialRootPaths.10 = EXT:ai_assistant/Resources/Private/Frontend/Vue/Partials/
@@ -29,6 +29,12 @@ plugin.tx_aiassistantpremium {
         }
     }
 }
+
+[{$aiAssistant.useVueIntegration} == 1]
+    plugin.tx_aiassistantpremium.view {
+        templateRootPaths.100 = EXT:ai_assistant_premium/Resources/Private/Frontend/Vue/Integration/Templates/
+    }
+[END]
 
 [{$aiAssistantPremium.useClassicalSearch} == 1]
     plugin.tx_kesearch_pi1 {

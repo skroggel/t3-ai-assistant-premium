@@ -20,6 +20,12 @@
 			<trans-unit id="flexform.search.summary_profile">
 				<source>Search summary profile</source>
 			</trans-unit>
+			<trans-unit id="flexform.search.element_id">
+				<source>HTML element ID</source>
+			</trans-unit>
+			<trans-unit id="flexform.search.element_id.description">
+				<source>Stable ID of the Integration mount element. Use the same value for all translations of this content element.</source>
+			</trans-unit>
 			<trans-unit id="flexform.search.include_default_styles">
 				<source>Include default chat styles</source>
 			</trans-unit>

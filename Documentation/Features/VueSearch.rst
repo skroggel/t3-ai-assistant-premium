@@ -25,6 +25,56 @@ Place the Premium **Search** plugin on the page. It renders:
 For summaries, also place the Premium **Search Summary** plugin. It renders the
 Summary custom element and registers the Summary client.
 
+The Summary is also available as a regular Vue component. It uses the standard
+``AiAssistantChat`` component by default. Existing Vue applications can inject a
+custom chat presentation with the ``chatComponent`` prop; the replacement
+receives the same chat props and can use the Core ``useAiAssistantChat``
+composable and chat subcomponents.
+
+Choose one Summary setup
+------------------------
+
+**Use the Premium Summary as-is, without application-level Vue**
+    Keep the default ``SearchSummary.html`` Fluid template unchanged. It loads
+    ``ai-assistant-transport.js`` and ``ai-assistant-premium.js``. The Premium
+    bundle contains the Summary custom element and its standard Core
+    ``AiAssistantChat`` component. The template renders
+    ``<ai-assistant-search-summary>`` and the complete Summary is initialized by
+    the compiled Premium custom-element bundle. The separate Core
+    ``ai-assistant-chat.js`` bundle is only needed when another standalone
+    ``<ai-assistant-chat>`` is present on the same page.
+
+**Use the Summary inside an existing Vue application**
+    Set ``aiAssistant.useVueIntegration: 1`` and configure a stable
+    ``settings.elementId`` in the Summary FlexForm. TYPO3 selects
+    ``Vue/Integration/Templates/Search/SearchSummary.html`` and emits a mount
+    container. Import ``AiAssistantSearchSummary`` from
+    ``Resources/Private/Frontend/Vue/Src/index.js`` and pass the same custom
+    ``chatComponent`` used by the Core Chat integration. The Summary's default
+    nested chat is the regular Core ``AiAssistantChat`` component, not the
+    native ``ai-assistant-chat`` element.
+
+The Premium bundle has a separate responsibility from the Summary component.
+If the page still uses the native ``ai-assistant-search-payload-builder`` or
+search-enhancer custom elements, keep ``ai-assistant-premium.js`` loaded. It
+provides their browser APIs and publishes the normalized payload consumed by
+the Summary. Removing the Core chat bundle is therefore independent from
+removing the Premium bundle.
+
+Only remove ``ai-assistant-premium.js`` when the site also replaces the Premium
+payload-builder/search-enhancer custom elements with its own Vue integration
+and still provides the equivalent ``window.AiAssistantPremiumSearchPayloadBuilder``
+API or payload events expected by ``AiAssistantSearchSummary``.
+
+The Premium source entry exports ``AiAssistantSearchPayloadBuilder`` for this
+purpose. A site can mount that component with its own Vue runtime instead of
+loading the complete Premium custom-element bundle.
+
+In both setups, the Summary must receive the normalized search payload. The
+Summary component does not perform the search itself; it consumes the payload
+published by the Premium payload builder and adds it to the Assistant runtime
+settings before creating the nested chat.
+
 The clients are available after the Premium bundle has mounted:
 
 ..  code-block:: javascript
