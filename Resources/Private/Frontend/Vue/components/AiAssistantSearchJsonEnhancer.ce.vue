@@ -24,7 +24,7 @@ const props = defineProps({
 });
 
 /** @type {string} Premium search middleware parameter namespace. */
-const controlParameter = 'tx_aiassistantpremium_search';
+const controlParameter = 'tx_aiassistant_chat';
 const apiName = 'AiAssistantPremiumSearch';
 let api = null;
 
@@ -98,7 +98,7 @@ const optimize = async ({ searchQuery } = {}) => {
     const response = await assistant({ query, settingsJson: JSON.stringify({ search: { phase: 'query-optimization', integration: props.integration } }) });
     return {
         ...response,
-        effectiveQuery: response.context?.currentQuery || response.answer || query,
+        currentQuery: response.currentQuery || response.context?.currentQuery || response.answer || query,
     };
 };
 

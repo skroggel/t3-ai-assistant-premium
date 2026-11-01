@@ -40,26 +40,3 @@ plugin.tx_aiassistantpremium {
         }
     }
 [END]
-
-aiAssistantPremiumAssistant = PAGE
-aiAssistantPremiumAssistant {
-    typeNum = 1790831372
-    config {
-        disableAllHeaderCode = 1
-        no_cache = 1
-        additionalHeaders.10.header = Content-Type: application/json; charset=utf-8
-    }
-
-    10 = USER
-    10 {
-        userFunc = TYPO3\CMS\Extbase\Core\Bootstrap->run
-        extensionName = AiAssistantPremium
-        pluginName = Search
-        vendorName = Madj2k
-        switchableControllerActions {
-            Json {
-                1 = assistant
-            }
-        }
-    }
-}

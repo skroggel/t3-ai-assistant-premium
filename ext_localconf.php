@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 
 use Madj2k\AiAssistantPremium\Controller\SearchController;
-use Madj2k\AiAssistantPremium\Controller\JsonController;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\Writer\FileWriter;
@@ -33,11 +32,9 @@ defined('TYPO3') or die('Access denied.');
         'Search',
         [
             SearchController::class => 'index',
-            JsonController::class => 'assistant',
         ],
         [
             SearchController::class => 'index,normalize',
-            JsonController::class => 'assistant',
         ],
         ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
     );

@@ -111,10 +111,15 @@ final readonly class SearchQueryMiddleware implements MiddlewareInterface
         }
 
         $profileUid = max(0, (int)($control['assistantProfile'] ?? 0));
-        $integration = $this->integrationRegistry->get((string)($control['integration'] ?? ''));
+        $integrationIdentifier = trim((string)($control['integration'] ?? ''));
+        if ($integrationIdentifier === '') {
+            return $handler->handle($request);
+        }
+
+        $integration = $this->integrationRegistry->get($integrationIdentifier);
         if (!$integration instanceof SearchIntegration) {
             $this->logger->warning('Premium search optimization skipped: integration not found.', [
-                'integration' => (string)($control['integration'] ?? ''),
+                'integration' => $integrationIdentifier,
             ]);
             return $handler->handle($request);
         }

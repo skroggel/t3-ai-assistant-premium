@@ -2,7 +2,8 @@
     <section v-if="ready" class="aiassistant-summary-container">
         <ai-assistant-chat
             :key="summaryVersion"
-            :endpoint="sseEndpoint"
+            :endpoint="streamResponse ? sseEndpoint : jsonEndpoint"
+            :stream-response="streamResponse"
             :assistant-profile="assistantProfile"
             :chat-identifier="chatIdentifier"
             :request-token="requestToken"
@@ -25,6 +26,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
 /**
  * @typedef {Object} AiAssistantSearchSummaryProps
  * @property {string} sseEndpoint AI Assistant SSE endpoint for follow-up messages.
+ * @property {string} jsonEndpoint Premium JSON endpoint for complete responses.
  * @property {string} integration Search integration identifier.
  * @property {string} query Original search query used for the summary.
  * @property {string|number} assistantProfile Assistant profile uid.
@@ -37,12 +39,14 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
  * @property {string} uiComponentsJson Serialized UI component definitions for the nested chat.
  * @property {string} errorHandling Frontend error handling mode.
  * @property {boolean|string|number} showWithoutResults Whether to run the summary without search results.
+ * @property {boolean|string|number} streamResponse Whether to stream the assistant response.
  */
 
 /** @type {import('vue').DefineProps<AiAssistantSearchSummaryProps>} */
 const props = defineProps({
     // Request identity and search context.
     sseEndpoint: { type: String, default: '' },
+    jsonEndpoint: { type: String, default: '' },
     integration: { type: String, default: 'ke_search' },
     query: { type: String, default: '' },
     assistantProfile: { type: [String, Number], default: 0 },
@@ -59,6 +63,7 @@ const props = defineProps({
     uiComponentsJson: { type: String, default: '[]' },
     errorHandling: { type: String, default: 'default' },
     showWithoutResults: { type: [String, Number, Boolean], default: false },
+    streamResponse: { type: [String, Number, Boolean], default: true },
 });
 
 /** @type {import('vue').Ref<boolean>} Whether captured results are ready. */
@@ -73,6 +78,8 @@ const toBoolean = (value) => {
     }
     return value === true || value === 1;
 };
+
+const streamResponse = toBoolean(props.streamResponse);
 
 /**
  * Hides a silent summary when the nested chat cannot produce an answer.

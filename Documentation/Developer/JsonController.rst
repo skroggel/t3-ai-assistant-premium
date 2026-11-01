@@ -1,8 +1,8 @@
-Generic JSON controller
-=======================
+Shared JSON controller
+=====================
 
-The Premium JSON API is a transport adapter for complete Assistant turns. It
-does not implement a second pipeline. The controller creates an
+The AI Assistant JSON API is a transport adapter for complete Assistant turns.
+It does not implement a second pipeline. The controller creates an
 ``AssistantRequest`` and delegates execution to the Core ``Orchestrator``.
 
 Architecture
@@ -24,20 +24,20 @@ Assistant response as JSON. Both use the same Assistant profile and pipeline.
 Controller action
 -----------------
 
-The action is registered as ``JsonController->assistantAction`` and exposed by
-the dedicated page type ``1790831372``. Its request parameters are namespaced by
-the Premium Search plugin:
+The action is registered as ``JsonController->assistantAction`` in the base
+``ai_assistant`` extension and exposed by page type ``1790831371``. Its request
+parameters use the normal chat namespace:
 
 ..  code-block:: text
 
-    tx_aiassistantpremium_search[query]
-    tx_aiassistantpremium_search[startTimestamp]
-    tx_aiassistantpremium_search[assistantProfile]
-    tx_aiassistantpremium_search[chatIdentifier]
-    tx_aiassistantpremium_search[settingsJson]
-    tx_aiassistantpremium_search[requestToken]
-    tx_aiassistantpremium_search[userLanguage]
-    tx_aiassistantpremium_search[directInteraction]
+    tx_aiassistant_chat[query]
+    tx_aiassistant_chat[startTimestamp]
+    tx_aiassistant_chat[assistantProfile]
+    tx_aiassistant_chat[chatIdentifier]
+    tx_aiassistant_chat[settingsJson]
+    tx_aiassistant_chat[requestToken]
+    tx_aiassistant_chat[userLanguage]
+    tx_aiassistant_chat[directInteraction]
 
 The controller does not accept search result rows. The Summary flow uses the
 existing Assistant SSE chat instead. Its canonical payload is placed in
@@ -54,13 +54,8 @@ the request identity used by the frontend:
 
     {
         "answer": "",
-        "context": {
-            "currentQuery": "Optimized Query",
-            "answerContext": "",
-            "retrievalCount": 0,
-            "retrievals": [],
-            "sources": []
-        },
+        "originalQuery": "Original user query",
+        "currentQuery": "Optimized Query",
         "debug": [],
         "assistantProfile": 1001,
         "chatIdentifier": "search-123"
@@ -71,7 +66,7 @@ be empty. The optimized query is then available at:
 
 ..  code-block:: javascript
 
-    response.context.currentQuery
+    response.currentQuery
 
 Security
 --------
@@ -79,7 +74,6 @@ Security
 The controller is not an open Assistant runner. Before executing the
 Orchestrator it verifies:
 
-* the Premium license;
 * the Assistant profile against the active site's
   ``aiAssistant.allowedAssistantProfiles`` setting;
 * the signed frontend token;

@@ -45,6 +45,14 @@
             <trans-unit id="flexform.search.render_chunk_characters.description"><source>Number of characters rendered per visual catch-up step.</source></trans-unit>
             <trans-unit id="flexform.search.initial_message_delay"><source>Initial message delay (milliseconds)</source></trans-unit>
             <trans-unit id="flexform.search.response_message_delay"><source>Response message delay (milliseconds)</source></trans-unit>
+            <trans-unit id="flexform.search.loading_messages"><source>Loading messages</source></trans-unit>
+            <trans-unit id="flexform.search.loading_messages.description"><source>JSON array of messages shown while the assistant is preparing the response. Example: [&quot;I am searching ...&quot;, &quot;I am preparing the answer ...&quot;]</source></trans-unit>
+            <trans-unit id="flexform.search.loading_messages_timeout"><source>Loading message interval (milliseconds)</source></trans-unit>
+            <trans-unit id="flexform.search.loading_messages_timeout.description"><source>Time between rotating loading messages in milliseconds. Messages rotate only while the assistant is generating.</source></trans-unit>
+            <trans-unit id="flexform.search.loading_html"><source>Loading HTML</source></trans-unit>
+            <trans-unit id="flexform.search.loading_html.description"><source>Optional HTML shown next to the loading messages while the assistant is preparing the response. Example: &lt;span class=&quot;spinner&quot;&gt;&lt;/span&gt;</source></trans-unit>
+            <trans-unit id="flexform.search.stream_response"><source>Stream response</source></trans-unit>
+            <trans-unit id="flexform.search.stream_response.description"><source>Stream the answer while it is generated. Disable this to use the complete JSON response.</source></trans-unit>
 		</body>
 	</file>
 </xliff>

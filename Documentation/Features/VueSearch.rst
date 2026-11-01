@@ -43,12 +43,13 @@ The Vue application supplies the current search query:
         searchQuery: currentSearchQuery
     });
 
-The client adds the server-rendered Assistant context and calls the generic
-Premium JSON controller. Use the optimized query from the Core response:
+The client adds the server-rendered Assistant context and calls the shared
+JSON controller from ``ai-assistant``. Use the optimized query from the Core
+response:
 
 ..  code-block:: javascript
 
-    const effectiveQuery = response.context.currentQuery;
+    const currentQuery = response.currentQuery;
 
 The optimizer response must be awaited before requesting filters or result rows.
 Those two native search requests may run in parallel after optimization.
@@ -245,14 +246,14 @@ server-rendered element properties:
 
 ..  code-block:: text
 
-    tx_aiassistantpremium_search[query]=<searchQuery>
-    tx_aiassistantpremium_search[startTimestamp]=<session timestamp>
-    tx_aiassistantpremium_search[assistantProfile]=<configured profile>
-    tx_aiassistantpremium_search[chatIdentifier]=<configured identifier>
-    tx_aiassistantpremium_search[settingsJson]=<runtime settings>
-    tx_aiassistantpremium_search[requestToken]=<signed token>
-    tx_aiassistantpremium_search[userLanguage]=<user language>
-    tx_aiassistantpremium_search[directInteraction]=<optional direct interaction>
+    tx_aiassistant_chat[query]=<searchQuery>
+    tx_aiassistant_chat[startTimestamp]=<session timestamp>
+    tx_aiassistant_chat[assistantProfile]=<configured profile>
+    tx_aiassistant_chat[chatIdentifier]=<configured identifier>
+    tx_aiassistant_chat[settingsJson]=<runtime settings>
+    tx_aiassistant_chat[requestToken]=<signed token>
+    tx_aiassistant_chat[userLanguage]=<user language>
+    tx_aiassistant_chat[directInteraction]=<optional direct interaction>
 
 The Vue application does not construct these fields itself and does not need
 to know that KeSearch stores its query in
@@ -361,10 +362,13 @@ For query optimization, the Premium plugin renders a signed, expiring token.
 The token is bound to the site, Assistant profile and chat identifier. The JSON
 controller checks:
 
-* Premium license validity;
 * the site allowlist ``aiAssistant.allowedAssistantProfiles``;
 * token signature, expiry and context;
 * the configured Assistant profile and token for the optimizer request.
+
+The native search middleware remains Premium-license protected. The direct JSON
+transport itself is provided by ``ai-assistant`` and has no Premium license
+check.
 
 The Summary SSE request reuses the canonical payload prepared by the Vue
 builder through ``settings.search.capturedResults``.
